@@ -24,8 +24,8 @@ export default function Home() {
             AMD Price Tracker
           </h1>
           <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-            Track prices on AMD Ryzen processors and Radeon GPUs across
-            retailers. Find the best deals and set price alerts.
+            Track Canadian prices (CAD) on AMD Ryzen processors and Radeon GPUs
+            across retailers. Find the best deals and set price alerts.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link

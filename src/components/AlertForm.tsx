@@ -61,14 +61,14 @@ export default function AlertForm({ product }: AlertFormProps) {
 
       {showSuccess ? (
         <div className="bg-green-500/20 border border-green-500/40 rounded-lg p-4 text-green-400 text-sm">
-          Alert created! You&apos;ll be notified when {product.name} drops to $
+          Alert created! You&apos;ll be notified when {product.name} drops to C$
           {targetPrice}.
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="text-gray-400 text-sm block mb-1">
-              Target Price ($)
+              Target Price (C$)
             </label>
             <input
               type="number"
@@ -81,7 +81,7 @@ export default function AlertForm({ product }: AlertFormProps) {
               required
             />
             <p className="text-gray-500 text-xs mt-1">
-              Current lowest: ${product.currentLowest}
+              Current lowest: C${product.currentLowest}
             </p>
           </div>
           <div>

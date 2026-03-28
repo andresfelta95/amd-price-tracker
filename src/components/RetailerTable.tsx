@@ -54,7 +54,7 @@ export default function RetailerTable({ retailers }: RetailerTableProps) {
                       idx === 0 ? "text-green-400" : "text-white"
                     }`}
                   >
-                    ${retailer.price.toFixed(2)}
+                    C${retailer.price.toFixed(2)}
                   </span>
                 </td>
                 <td className="py-3">

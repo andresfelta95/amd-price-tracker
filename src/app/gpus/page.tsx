@@ -16,8 +16,8 @@ export default function GPUsPage() {
           AMD Graphics Cards
         </h1>
         <p className="text-gray-400">
-          Compare prices across retailers for AMD Radeon GPUs. Click on any
-          product to see price history and retailer details.
+          Compare Canadian prices (CAD) across retailers for AMD Radeon GPUs.
+          Click on any product to see price history and retailer details.
         </p>
       </div>
 
@@ -30,7 +30,7 @@ export default function GPUsPage() {
         <div className="bg-amd-gray border border-gray-700 rounded-xl p-4">
           <p className="text-gray-400 text-sm">Lowest Price</p>
           <p className="text-2xl font-bold text-green-400">
-            ${Math.min(...gpus.map((g) => g.currentLowest))}
+            C${Math.min(...gpus.map((g) => g.currentLowest))}
           </p>
         </div>
         <div className="bg-amd-gray border border-gray-700 rounded-xl p-4">

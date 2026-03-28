@@ -67,7 +67,7 @@ export default function ScrapeButton({ productName }: ScrapeButtonProps) {
               <span className="text-white font-medium">{r.retailer}</span>
               {r.price ? (
                 <span className="text-green-400 font-semibold">
-                  ${r.price.toFixed(2)}
+                  C${r.price.toFixed(2)}
                 </span>
               ) : (
                 <span className="text-gray-500 text-sm">

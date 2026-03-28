@@ -10,7 +10,7 @@ export interface ScrapedPrice {
 }
 
 /**
- * Scrapes a product price from Amazon search page.
+ * Scrapes a product price from Amazon.ca search page.
  * NOTE: Real scraping may be blocked by retailers.
  * This provides the structure — in production, consider using
  * official APIs (Amazon Product Advertising API, etc.) or
@@ -18,13 +18,13 @@ export interface ScrapedPrice {
  */
 export async function scrapeAmazon(query: string): Promise<ScrapedPrice> {
   try {
-    const searchUrl = `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
+    const searchUrl = `https://www.amazon.ca/s?k=${encodeURIComponent(query)}`;
     const { data } = await axios.get(searchUrl, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         Accept: "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Language": "en-CA,en;q=0.9",
       },
       timeout: 10000,
     });
@@ -35,14 +35,14 @@ export async function scrapeAmazon(query: string): Promise<ScrapedPrice> {
     const price = parseFloat(`${priceWhole}${priceFraction}`);
 
     return {
-      retailer: "Amazon",
+      retailer: "Amazon.ca",
       price: isNaN(price) ? null : price,
       url: searchUrl,
       inStock: price > 0,
     };
   } catch (error) {
     return {
-      retailer: "Amazon",
+      retailer: "Amazon.ca",
       price: null,
       url: "",
       inStock: false,
@@ -53,13 +53,13 @@ export async function scrapeAmazon(query: string): Promise<ScrapedPrice> {
 
 export async function scrapeNewegg(query: string): Promise<ScrapedPrice> {
   try {
-    const searchUrl = `https://www.newegg.com/p/pl?d=${encodeURIComponent(query)}`;
+    const searchUrl = `https://www.newegg.ca/p/pl?d=${encodeURIComponent(query)}`;
     const { data } = await axios.get(searchUrl, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         Accept: "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Language": "en-CA,en;q=0.9",
       },
       timeout: 10000,
     });
@@ -70,14 +70,14 @@ export async function scrapeNewegg(query: string): Promise<ScrapedPrice> {
     const price = parseFloat(`${priceText}${priceSup}`);
 
     return {
-      retailer: "Newegg",
+      retailer: "Newegg.ca",
       price: isNaN(price) ? null : price,
       url: searchUrl,
       inStock: price > 0,
     };
   } catch (error) {
     return {
-      retailer: "Newegg",
+      retailer: "Newegg.ca",
       price: null,
       url: "",
       inStock: false,
@@ -88,13 +88,13 @@ export async function scrapeNewegg(query: string): Promise<ScrapedPrice> {
 
 export async function scrapeBestBuy(query: string): Promise<ScrapedPrice> {
   try {
-    const searchUrl = `https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(query)}`;
+    const searchUrl = `https://www.bestbuy.ca/en-ca/search?search=${encodeURIComponent(query)}`;
     const { data } = await axios.get(searchUrl, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         Accept: "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Language": "en-CA,en;q=0.9",
       },
       timeout: 10000,
     });
@@ -104,14 +104,48 @@ export async function scrapeBestBuy(query: string): Promise<ScrapedPrice> {
     const price = parseFloat(priceText.replace(/[^0-9.]/g, ""));
 
     return {
-      retailer: "Best Buy",
+      retailer: "Best Buy Canada",
       price: isNaN(price) ? null : price,
       url: searchUrl,
       inStock: price > 0,
     };
   } catch (error) {
     return {
-      retailer: "Best Buy",
+      retailer: "Best Buy Canada",
+      price: null,
+      url: "",
+      inStock: false,
+      error: `Scraping failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+    };
+  }
+}
+
+export async function scrapeCanadaComputers(query: string): Promise<ScrapedPrice> {
+  try {
+    const searchUrl = `https://www.canadacomputers.com/en/search?q=${encodeURIComponent(query)}`;
+    const { data } = await axios.get(searchUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "en-CA,en;q=0.9",
+      },
+      timeout: 10000,
+    });
+
+    const $ = cheerio.load(data);
+    const priceText = $(".product-card__price").first().text();
+    const price = parseFloat(priceText.replace(/[^0-9.]/g, ""));
+
+    return {
+      retailer: "Canada Computers",
+      price: isNaN(price) ? null : price,
+      url: searchUrl,
+      inStock: price > 0,
+    };
+  } catch (error) {
+    return {
+      retailer: "Canada Computers",
       price: null,
       url: "",
       inStock: false,
@@ -121,7 +155,8 @@ export async function scrapeBestBuy(query: string): Promise<ScrapedPrice> {
 }
 
 /**
- * Scrapes prices from all supported retailers for a given product.
+ * Scrapes prices from all supported Canadian retailers for a given product.
+ * All prices are in CAD (Canadian Dollars).
  */
 export async function scrapeAllPrices(
   productName: string
@@ -130,6 +165,7 @@ export async function scrapeAllPrices(
     scrapeAmazon(productName),
     scrapeNewegg(productName),
     scrapeBestBuy(productName),
+    scrapeCanadaComputers(productName),
   ]);
 
   return results.map((result) =>

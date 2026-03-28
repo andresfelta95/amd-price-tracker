@@ -84,11 +84,11 @@ export default function ProductPage({ params }: ProductPageProps) {
               </h1>
               <div className="flex items-end gap-3 mb-4">
                 <span className="text-4xl font-bold text-white">
-                  ${product.currentLowest}
+                  C${product.currentLowest}
                 </span>
                 {discount > 0 && (
                   <span className="text-xl text-gray-500 line-through mb-1">
-                    ${product.msrp}
+                    C${product.msrp}
                   </span>
                 )}
               </div>
