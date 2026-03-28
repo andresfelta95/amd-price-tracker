@@ -138,7 +138,7 @@ export const products: Product[] = [
     ],
     priceHistory: generatePriceHistory(379),
   },
-  // ===== GPUs =====
+  // ===== GPUs — RDNA 4 (RX 9000 series) =====
   {
     id: "rx-9070-xt",
     name: "AMD Radeon RX 9070 XT",
@@ -155,9 +155,17 @@ export const products: Product[] = [
     msrp: 549,
     currentLowest: 549,
     retailers: [
-      { name: "Amazon", url: "https://amazon.com/dp/B0DRX9070XT", price: 579, inStock: false, lastChecked: new Date().toISOString() },
-      { name: "Newegg", url: "https://newegg.com/amd-radeon-rx-9070-xt", price: 549, inStock: true, lastChecked: new Date().toISOString() },
-      { name: "Best Buy", url: "https://bestbuy.com/site/amd-radeon-rx-9070-xt", price: 549, inStock: false, lastChecked: new Date().toISOString() },
+      // 🇺🇸 US retailers (USD)
+      { name: "Amazon", url: "https://www.amazon.com/s?k=AMD+Radeon+RX+9070+XT", price: 579, currency: "USD", region: "US", inStock: false, lastChecked: new Date().toISOString() },
+      { name: "Newegg", url: "https://www.newegg.com/p/pl?d=AMD+Radeon+RX+9070+XT", price: 549, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy", url: "https://www.bestbuy.com/site/searchpage.jsp?st=AMD+Radeon+RX+9070+XT", price: 549, currency: "USD", region: "US", inStock: false, lastChecked: new Date().toISOString() },
+      { name: "B&H Photo", url: "https://www.bhphotovideo.com/c/search?q=AMD+Radeon+RX+9070+XT", price: 559, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      // 🇨🇦 Canadian retailers (CAD)
+      { name: "Amazon Canada", url: "https://www.amazon.ca/s?k=AMD+Radeon+RX+9070+XT", price: 799, currency: "CAD", region: "CA", inStock: false, lastChecked: new Date().toISOString() },
+      { name: "Memory Express", url: "https://www.memoryexpress.com/Search/Products?Search=RX+9070+XT", price: 789, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Canada Computers", url: "https://www.canadacomputers.com/search_results.php?keywords=RX+9070+XT", price: 779, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy Canada", url: "https://www.bestbuy.ca/en-ca/search?query=AMD+Radeon+RX+9070+XT", price: 779, currency: "CAD", region: "CA", inStock: false, lastChecked: new Date().toISOString() },
+      { name: "Newegg Canada", url: "https://www.newegg.ca/p/pl?d=AMD+Radeon+RX+9070+XT", price: 769, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
     ],
     priceHistory: generatePriceHistory(569),
   },
@@ -177,12 +185,112 @@ export const products: Product[] = [
     msrp: 449,
     currentLowest: 449,
     retailers: [
-      { name: "Amazon", url: "https://amazon.com/dp/B0DRX9070", price: 469, inStock: true, lastChecked: new Date().toISOString() },
-      { name: "Newegg", url: "https://newegg.com/amd-radeon-rx-9070", price: 449, inStock: true, lastChecked: new Date().toISOString() },
-      { name: "Best Buy", url: "https://bestbuy.com/site/amd-radeon-rx-9070", price: 449, inStock: true, lastChecked: new Date().toISOString() },
+      // 🇺🇸 US retailers (USD)
+      { name: "Amazon", url: "https://www.amazon.com/s?k=AMD+Radeon+RX+9070", price: 469, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Newegg", url: "https://www.newegg.com/p/pl?d=AMD+Radeon+RX+9070", price: 449, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy", url: "https://www.bestbuy.com/site/searchpage.jsp?st=AMD+Radeon+RX+9070", price: 449, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Micro Center", url: "https://www.microcenter.com/search/search_results.aspx?N=4294966995&query=RX+9070", price: 444, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      // 🇨🇦 Canadian retailers (CAD)
+      { name: "Amazon Canada", url: "https://www.amazon.ca/s?k=AMD+Radeon+RX+9070", price: 659, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Memory Express", url: "https://www.memoryexpress.com/Search/Products?Search=RX+9070", price: 639, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Canada Computers", url: "https://www.canadacomputers.com/search_results.php?keywords=RX+9070", price: 629, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy Canada", url: "https://www.bestbuy.ca/en-ca/search?query=AMD+Radeon+RX+9070", price: 629, currency: "CAD", region: "CA", inStock: false, lastChecked: new Date().toISOString() },
+      { name: "Newegg Canada", url: "https://www.newegg.ca/p/pl?d=AMD+Radeon+RX+9070", price: 639, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
     ],
     priceHistory: generatePriceHistory(459),
   },
+  {
+    id: "rx-9060-xt",
+    name: "AMD Radeon RX 9060 XT",
+    category: "gpu",
+    image: "/gpu-placeholder.svg",
+    specs: {
+      "Stream Processors": "2048",
+      "VRAM": "16GB GDDR6",
+      "Boost Clock": "2.59 GHz",
+      "Memory Bus": "128-bit",
+      TDP: "165W",
+      Architecture: "RDNA 4",
+    },
+    msrp: 329,
+    currentLowest: 319,
+    retailers: [
+      // 🇺🇸 US retailers (USD)
+      { name: "Amazon", url: "https://www.amazon.com/s?k=AMD+Radeon+RX+9060+XT", price: 349, currency: "USD", region: "US", inStock: false, lastChecked: new Date().toISOString() },
+      { name: "Newegg", url: "https://www.newegg.com/p/pl?d=AMD+Radeon+RX+9060+XT", price: 329, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy", url: "https://www.bestbuy.com/site/searchpage.jsp?st=AMD+Radeon+RX+9060+XT", price: 329, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Micro Center", url: "https://www.microcenter.com/search/search_results.aspx?N=4294966995&query=RX+9060+XT", price: 319, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "B&H Photo", url: "https://www.bhphotovideo.com/c/search?q=AMD+Radeon+RX+9060+XT", price: 335, currency: "USD", region: "US", inStock: false, lastChecked: new Date().toISOString() },
+      // 🇨🇦 Canadian retailers (CAD)
+      { name: "Amazon Canada", url: "https://www.amazon.ca/s?k=AMD+Radeon+RX+9060+XT", price: 489, currency: "CAD", region: "CA", inStock: false, lastChecked: new Date().toISOString() },
+      { name: "Memory Express", url: "https://www.memoryexpress.com/Search/Products?Search=RX+9060+XT", price: 469, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Canada Computers", url: "https://www.canadacomputers.com/search_results.php?keywords=RX+9060+XT", price: 459, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy Canada", url: "https://www.bestbuy.ca/en-ca/search?query=AMD+Radeon+RX+9060+XT", price: 469, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Newegg Canada", url: "https://www.newegg.ca/p/pl?d=AMD+Radeon+RX+9060+XT", price: 459, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+    ],
+    priceHistory: generatePriceHistory(339),
+  },
+  {
+    id: "rx-9060",
+    name: "AMD Radeon RX 9060",
+    category: "gpu",
+    image: "/gpu-placeholder.svg",
+    specs: {
+      "Stream Processors": "1536",
+      "VRAM": "8GB GDDR6",
+      "Boost Clock": "2.49 GHz",
+      "Memory Bus": "128-bit",
+      TDP: "120W",
+      Architecture: "RDNA 4",
+    },
+    msrp: 249,
+    currentLowest: 239,
+    retailers: [
+      // 🇺🇸 US retailers (USD)
+      { name: "Amazon", url: "https://www.amazon.com/s?k=AMD+Radeon+RX+9060", price: 259, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Newegg", url: "https://www.newegg.com/p/pl?d=AMD+Radeon+RX+9060", price: 249, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy", url: "https://www.bestbuy.com/site/searchpage.jsp?st=AMD+Radeon+RX+9060", price: 249, currency: "USD", region: "US", inStock: false, lastChecked: new Date().toISOString() },
+      { name: "Micro Center", url: "https://www.microcenter.com/search/search_results.aspx?N=4294966995&query=RX+9060", price: 239, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      // 🇨🇦 Canadian retailers (CAD)
+      { name: "Amazon Canada", url: "https://www.amazon.ca/s?k=AMD+Radeon+RX+9060", price: 359, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Memory Express", url: "https://www.memoryexpress.com/Search/Products?Search=RX+9060", price: 349, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Canada Computers", url: "https://www.canadacomputers.com/search_results.php?keywords=RX+9060", price: 349, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy Canada", url: "https://www.bestbuy.ca/en-ca/search?query=AMD+Radeon+RX+9060", price: 349, currency: "CAD", region: "CA", inStock: false, lastChecked: new Date().toISOString() },
+      { name: "Newegg Canada", url: "https://www.newegg.ca/p/pl?d=AMD+Radeon+RX+9060", price: 355, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+    ],
+    priceHistory: generatePriceHistory(254),
+  },
+  {
+    id: "rx-9050",
+    name: "AMD Radeon RX 9050",
+    category: "gpu",
+    image: "/gpu-placeholder.svg",
+    specs: {
+      "Stream Processors": "1024",
+      "VRAM": "8GB GDDR6",
+      "Boost Clock": "2.45 GHz",
+      "Memory Bus": "128-bit",
+      TDP: "90W",
+      Architecture: "RDNA 4",
+    },
+    msrp: 179,
+    currentLowest: 169,
+    retailers: [
+      // 🇺🇸 US retailers (USD)
+      { name: "Amazon", url: "https://www.amazon.com/s?k=AMD+Radeon+RX+9050", price: 179, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Newegg", url: "https://www.newegg.com/p/pl?d=AMD+Radeon+RX+9050", price: 175, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy", url: "https://www.bestbuy.com/site/searchpage.jsp?st=AMD+Radeon+RX+9050", price: 179, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Micro Center", url: "https://www.microcenter.com/search/search_results.aspx?N=4294966995&query=RX+9050", price: 169, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      // 🇨🇦 Canadian retailers (CAD)
+      { name: "Amazon Canada", url: "https://www.amazon.ca/s?k=AMD+Radeon+RX+9050", price: 259, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Memory Express", url: "https://www.memoryexpress.com/Search/Products?Search=RX+9050", price: 249, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Canada Computers", url: "https://www.canadacomputers.com/search_results.php?keywords=RX+9050", price: 249, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy Canada", url: "https://www.bestbuy.ca/en-ca/search?query=AMD+Radeon+RX+9050", price: 259, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Newegg Canada", url: "https://www.newegg.ca/p/pl?d=AMD+Radeon+RX+9050", price: 255, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+    ],
+    priceHistory: generatePriceHistory(179),
+  },
+  // ===== GPUs — RDNA 3 (RX 7000 series) =====
   {
     id: "rx-7900-xtx",
     name: "AMD Radeon RX 7900 XTX",
@@ -199,9 +307,17 @@ export const products: Product[] = [
     msrp: 999,
     currentLowest: 849,
     retailers: [
-      { name: "Amazon", url: "https://amazon.com/dp/B0BSKMXFYJ", price: 849, inStock: true, lastChecked: new Date().toISOString() },
-      { name: "Newegg", url: "https://newegg.com/amd-radeon-rx-7900-xtx", price: 879, inStock: true, lastChecked: new Date().toISOString() },
-      { name: "Best Buy", url: "https://bestbuy.com/site/amd-radeon-rx-7900-xtx", price: 899, inStock: true, lastChecked: new Date().toISOString() },
+      // 🇺🇸 US retailers (USD)
+      { name: "Amazon", url: "https://www.amazon.com/s?k=AMD+Radeon+RX+7900+XTX", price: 849, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Newegg", url: "https://www.newegg.com/p/pl?d=AMD+Radeon+RX+7900+XTX", price: 879, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy", url: "https://www.bestbuy.com/site/searchpage.jsp?st=AMD+Radeon+RX+7900+XTX", price: 899, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "B&H Photo", url: "https://www.bhphotovideo.com/c/search?q=AMD+Radeon+RX+7900+XTX", price: 869, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      // 🇨🇦 Canadian retailers (CAD)
+      { name: "Amazon Canada", url: "https://www.amazon.ca/s?k=AMD+Radeon+RX+7900+XTX", price: 1189, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Memory Express", url: "https://www.memoryexpress.com/Search/Products?Search=RX+7900+XTX", price: 1219, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Canada Computers", url: "https://www.canadacomputers.com/search_results.php?keywords=RX+7900+XTX", price: 1199, currency: "CAD", region: "CA", inStock: false, lastChecked: new Date().toISOString() },
+      { name: "Best Buy Canada", url: "https://www.bestbuy.ca/en-ca/search?query=AMD+Radeon+RX+7900+XTX", price: 1259, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Newegg Canada", url: "https://www.newegg.ca/p/pl?d=AMD+Radeon+RX+7900+XTX", price: 1229, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
     ],
     priceHistory: generatePriceHistory(899),
   },
@@ -221,9 +337,16 @@ export const products: Product[] = [
     msrp: 799,
     currentLowest: 649,
     retailers: [
-      { name: "Amazon", url: "https://amazon.com/dp/B0BSKMXF22", price: 649, inStock: true, lastChecked: new Date().toISOString() },
-      { name: "Newegg", url: "https://newegg.com/amd-radeon-rx-7900-xt", price: 669, inStock: true, lastChecked: new Date().toISOString() },
-      { name: "Best Buy", url: "https://bestbuy.com/site/amd-radeon-rx-7900-xt", price: 699, inStock: false, lastChecked: new Date().toISOString() },
+      // 🇺🇸 US retailers (USD)
+      { name: "Amazon", url: "https://www.amazon.com/s?k=AMD+Radeon+RX+7900+XT", price: 649, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Newegg", url: "https://www.newegg.com/p/pl?d=AMD+Radeon+RX+7900+XT", price: 669, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy", url: "https://www.bestbuy.com/site/searchpage.jsp?st=AMD+Radeon+RX+7900+XT", price: 699, currency: "USD", region: "US", inStock: false, lastChecked: new Date().toISOString() },
+      // 🇨🇦 Canadian retailers (CAD)
+      { name: "Amazon Canada", url: "https://www.amazon.ca/s?k=AMD+Radeon+RX+7900+XT", price: 909, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Memory Express", url: "https://www.memoryexpress.com/Search/Products?Search=RX+7900+XT", price: 939, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Canada Computers", url: "https://www.canadacomputers.com/search_results.php?keywords=RX+7900+XT", price: 919, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy Canada", url: "https://www.bestbuy.ca/en-ca/search?query=AMD+Radeon+RX+7900+XT", price: 959, currency: "CAD", region: "CA", inStock: false, lastChecked: new Date().toISOString() },
+      { name: "Newegg Canada", url: "https://www.newegg.ca/p/pl?d=AMD+Radeon+RX+7900+XT", price: 929, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
     ],
     priceHistory: generatePriceHistory(699),
   },
@@ -243,9 +366,16 @@ export const products: Product[] = [
     msrp: 499,
     currentLowest: 429,
     retailers: [
-      { name: "Amazon", url: "https://amazon.com/dp/B0CG3LY9LR", price: 429, inStock: true, lastChecked: new Date().toISOString() },
-      { name: "Newegg", url: "https://newegg.com/amd-radeon-rx-7800-xt", price: 439, inStock: true, lastChecked: new Date().toISOString() },
-      { name: "Micro Center", url: "https://microcenter.com/product/amd-radeon-rx-7800-xt", price: 419, inStock: true, lastChecked: new Date().toISOString() },
+      // 🇺🇸 US retailers (USD)
+      { name: "Amazon", url: "https://www.amazon.com/s?k=AMD+Radeon+RX+7800+XT", price: 429, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Newegg", url: "https://www.newegg.com/p/pl?d=AMD+Radeon+RX+7800+XT", price: 439, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Micro Center", url: "https://www.microcenter.com/search/search_results.aspx?N=4294966995&query=RX+7800+XT", price: 419, currency: "USD", region: "US", inStock: true, lastChecked: new Date().toISOString() },
+      // 🇨🇦 Canadian retailers (CAD)
+      { name: "Amazon Canada", url: "https://www.amazon.ca/s?k=AMD+Radeon+RX+7800+XT", price: 599, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Memory Express", url: "https://www.memoryexpress.com/Search/Products?Search=RX+7800+XT", price: 609, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Canada Computers", url: "https://www.canadacomputers.com/search_results.php?keywords=RX+7800+XT", price: 599, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Best Buy Canada", url: "https://www.bestbuy.ca/en-ca/search?query=AMD+Radeon+RX+7800+XT", price: 619, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
+      { name: "Newegg Canada", url: "https://www.newegg.ca/p/pl?d=AMD+Radeon+RX+7800+XT", price: 609, currency: "CAD", region: "CA", inStock: true, lastChecked: new Date().toISOString() },
     ],
     priceHistory: generatePriceHistory(459),
   },
