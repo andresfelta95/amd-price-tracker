@@ -4,6 +4,10 @@ export interface Retailer {
   name: string;
   url: string;
   price: number;
+  /** ISO 4217 currency code. Defaults to "USD" if omitted. */
+  currency?: "USD" | "CAD";
+  /** Market region. Defaults to "US" if omitted. */
+  region?: "US" | "CA";
   inStock: boolean;
   lastChecked: string;
 }
