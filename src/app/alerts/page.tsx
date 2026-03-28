@@ -58,10 +58,10 @@ export default function AlertsPage() {
                 </Link>
                 <div className="flex items-center gap-4 mt-1">
                   <span className="text-gray-400 text-sm">
-                    Target: <span className="text-green-400 font-medium">${alert.targetPrice}</span>
+                    Target: <span className="text-green-400 font-medium">C${alert.targetPrice}</span>
                   </span>
                   <span className="text-gray-400 text-sm">
-                    Current: <span className="text-white font-medium">${alert.currentPrice}</span>
+                    Current: <span className="text-white font-medium">C${alert.currentPrice}</span>
                   </span>
                   <span className="text-gray-500 text-xs">
                     {alert.email}

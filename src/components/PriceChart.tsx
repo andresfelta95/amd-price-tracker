@@ -40,7 +40,7 @@ export default function PriceChart({ data, msrp }: PriceChartProps) {
             stroke="#9CA3AF"
             tick={{ fontSize: 12 }}
             domain={[minPrice * 0.95, maxPrice * 1.05]}
-            tickFormatter={(val) => `$${val}`}
+            tickFormatter={(val) => `C$${val}`}
           />
           <Tooltip
             contentStyle={{
@@ -49,7 +49,7 @@ export default function PriceChart({ data, msrp }: PriceChartProps) {
               borderRadius: "8px",
               color: "#fff",
             }}
-            formatter={(value: number) => [`$${value.toFixed(2)}`, "Price"]}
+            formatter={(value: number) => [`C$${value.toFixed(2)}`, "Price"]}
             labelFormatter={(label) =>
               new Date(label).toLocaleDateString("en-US", {
                 month: "short",
@@ -63,7 +63,7 @@ export default function PriceChart({ data, msrp }: PriceChartProps) {
             stroke="#ED1C24"
             strokeDasharray="5 5"
             label={{
-              value: `MSRP $${msrp}`,
+              value: `MSRP C$${msrp}`,
               position: "right",
               fill: "#ED1C24",
               fontSize: 12,
@@ -89,7 +89,7 @@ export default function PriceChart({ data, msrp }: PriceChartProps) {
           <span className="text-gray-400">MSRP</span>
         </div>
         <div className="text-gray-400 ml-auto">
-          Lowest: <span className="text-green-400 font-semibold">${minPrice.toFixed(2)}</span>
+          Lowest: <span className="text-green-400 font-semibold">C${minPrice.toFixed(2)}</span>
         </div>
       </div>
     </div>

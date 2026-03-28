@@ -14,8 +14,8 @@ export default function CPUsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">AMD Processors</h1>
         <p className="text-gray-400">
-          Compare prices across retailers for AMD Ryzen CPUs. Click on any
-          product to see price history and retailer details.
+          Compare Canadian prices (CAD) across retailers for AMD Ryzen CPUs.
+          Click on any product to see price history and retailer details.
         </p>
       </div>
 
@@ -28,7 +28,7 @@ export default function CPUsPage() {
         <div className="bg-amd-gray border border-gray-700 rounded-xl p-4">
           <p className="text-gray-400 text-sm">Lowest Price</p>
           <p className="text-2xl font-bold text-green-400">
-            ${Math.min(...cpus.map((c) => c.currentLowest))}
+            C${Math.min(...cpus.map((c) => c.currentLowest))}
           </p>
         </div>
         <div className="bg-amd-gray border border-gray-700 rounded-xl p-4">

@@ -55,11 +55,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-end justify-between">
           <div>
             <p className="text-2xl font-bold text-white">
-              ${product.currentLowest}
+              C${product.currentLowest}
             </p>
             {hasDiscount && (
               <p className="text-sm text-gray-500 line-through">
-                ${product.msrp} MSRP
+                C${product.msrp} MSRP
               </p>
             )}
           </div>

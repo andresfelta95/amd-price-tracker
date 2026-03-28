@@ -346,6 +346,7 @@ export async function scrapeUSPrices(productName: string): Promise<ScrapedPrice[
     scrapeAmazon(productName),
     scrapeNewegg(productName),
     scrapeBestBuy(productName),
+    scrapeCanadaComputers(productName),
   ]);
 
   return results.map((result) =>
