@@ -1,13 +1,11 @@
 export type ProductCategory = "cpu" | "gpu";
 
 export interface Retailer {
+  id?: number;
   name: string;
   url: string;
   price: number;
-  /** ISO 4217 currency code. Defaults to "USD" if omitted. */
-  currency?: "USD" | "CAD";
-  /** Market region. Defaults to "US" if omitted. */
-  region?: "US" | "CA";
+  currency?: "CAD";
   inStock: boolean;
   lastChecked: string;
 }
@@ -17,6 +15,19 @@ export interface PricePoint {
   price: number;
 }
 
+export interface GpuVariant {
+  id: number;
+  productId: string;
+  brand: string;
+  variant: string;
+  fullName: string;
+  retailerName?: string;
+  url?: string;
+  currentPrice?: number;
+  inStock?: boolean;
+  priceHistory: PricePoint[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -24,14 +35,17 @@ export interface Product {
   image: string;
   specs: Record<string, string>;
   msrp: number;
+  releaseDate?: string;
   currentLowest: number;
   retailers: Retailer[];
   priceHistory: PricePoint[];
+  variants?: GpuVariant[];
 }
 
 export interface PriceAlert {
   id: string;
   productId: string;
+  variantId?: number;
   productName: string;
   targetPrice: number;
   currentPrice: number;

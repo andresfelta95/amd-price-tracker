@@ -1,12 +1,47 @@
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
-import { products } from "@/data/products";
+import pool from "@/lib/db";
+import { Product } from "@/lib/types";
 
-export default function Home() {
+async function getHomeData() {
+  const client = await pool.connect();
+  try {
+    const pRes = await client.query(
+      `SELECT id, name, category, image, specs, msrp::float FROM products ORDER BY category, msrp DESC`
+    );
+    const products: Product[] = await Promise.all(
+      pRes.rows.map(async (p) => {
+        const rRes = await client.query(
+          `SELECT DISTINCT ON (r.id) ps.price::float
+           FROM price_snapshots ps JOIN retailers r ON r.id=ps.retailer_id
+           WHERE ps.product_id=$1 ORDER BY r.id, ps.recorded_at DESC`,
+          [p.id]
+        );
+        const prices = rRes.rows.map((r) => r.price);
+        const currentLowest = prices.length ? Math.min(...prices) : p.msrp;
+        return { ...p, specs: p.specs, currentLowest, retailers: [], priceHistory: [] };
+      })
+    );
+
+    const retailerCount = await client.query(`SELECT COUNT(*) AS cnt FROM retailers`);
+    const variantCount = await client.query(`SELECT COUNT(*) AS cnt FROM gpu_variants`);
+
+    return {
+      products,
+      retailerCount: parseInt(retailerCount.rows[0].cnt),
+      variantCount: parseInt(variantCount.rows[0].cnt),
+    };
+  } finally {
+    client.release();
+  }
+}
+
+export default async function Home() {
+  const { products, retailerCount, variantCount } = await getHomeData();
+
   const cpus = products.filter((p) => p.category === "cpu");
   const gpus = products.filter((p) => p.category === "gpu");
 
-  // Find best deals (biggest discount from MSRP)
   const bestDeals = [...products]
     .sort((a, b) => {
       const discA = (a.msrp - a.currentLowest) / a.msrp;
@@ -21,11 +56,11 @@ export default function Home() {
       <section className="bg-gradient-to-br from-amd-dark via-amd-gray to-amd-dark py-16 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-            AMD Price Tracker
+            AMD Price Tracker Canada
           </h1>
           <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-            Track Canadian prices (CAD) on AMD Ryzen processors and Radeon GPUs
-            across retailers. Find the best deals and set price alerts.
+            Track Canadian prices (CAD) on AMD Ryzen processors and Radeon GPUs across retailers.
+            See full price history since launch, brand variants, and set alerts.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link
@@ -42,19 +77,18 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-6 mt-12 max-w-lg mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-12 max-w-xl mx-auto">
             <div>
-              <p className="text-3xl font-bold text-amd-red">
-                {products.length}
-              </p>
+              <p className="text-3xl font-bold text-amd-red">{products.length}</p>
               <p className="text-gray-400 text-sm">Products</p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-amd-red">
-                {new Set(products.flatMap((p) => p.retailers.map((r) => r.name))).size}
-              </p>
-              <p className="text-gray-400 text-sm">Retailers</p>
+              <p className="text-3xl font-bold text-amd-red">{variantCount}</p>
+              <p className="text-gray-400 text-sm">GPU Variants</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-amd-red">{retailerCount}</p>
+              <p className="text-gray-400 text-sm">CA Retailers</p>
             </div>
             <div>
               <p className="text-3xl font-bold text-amd-red">24/7</p>
@@ -68,6 +102,7 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Best Deals Right Now</h2>
+          <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">🇨🇦 CAD prices</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {bestDeals.map((product) => (
@@ -80,10 +115,7 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">AMD Processors</h2>
-          <Link
-            href="/cpus"
-            className="text-amd-red hover:text-red-400 text-sm font-medium transition-colors"
-          >
+          <Link href="/cpus" className="text-amd-red hover:text-red-400 text-sm font-medium transition-colors">
             View All →
           </Link>
         </div>
@@ -98,10 +130,7 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">AMD Graphics Cards</h2>
-          <Link
-            href="/gpus"
-            className="text-amd-red hover:text-red-400 text-sm font-medium transition-colors"
-          >
+          <Link href="/gpus" className="text-amd-red hover:text-red-400 text-sm font-medium transition-colors">
             View All →
           </Link>
         </div>

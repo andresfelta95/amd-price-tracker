@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: amd_tracker_db
+    environment:
+      POSTGRES_USER: amd_tracker
+      POSTGRES_PASSWORD: amd_tracker_pass
+      POSTGRES_DB: amd_tracker
+    ports:
+      - "5433:5432"
+    volumes:
+      - amd_tracker_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  amd_tracker_data:
