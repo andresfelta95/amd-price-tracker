@@ -234,7 +234,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
       )}
 
-      <ScrapeButton productName={product.name} />
+      <ScrapeButton productId={product.id} productName={product.name} />
     </div>
   );
 }
