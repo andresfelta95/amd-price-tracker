@@ -20,7 +20,7 @@ async function getHomeData() {
           [p.id]
         );
         const prices = rRes.rows.map((r) => r.price);
-        const currentLowest = prices.length ? Math.min(...prices) : p.msrp;
+        const currentLowest = prices.length ? Math.min(...prices) : null;
         return { ...p, specs: p.specs, currentLowest, retailers: [], priceHistory: [] };
       })
     );
@@ -46,8 +46,8 @@ export default async function Home() {
 
   const bestDeals = [...products]
     .sort((a, b) => {
-      const discA = (a.msrp - a.currentLowest) / a.msrp;
-      const discB = (b.msrp - b.currentLowest) / b.msrp;
+      const discA = a.currentLowest !== null ? (a.msrp - a.currentLowest) / a.msrp : -Infinity;
+      const discB = b.currentLowest !== null ? (b.msrp - b.currentLowest) / b.msrp : -Infinity;
       return discB - discA;
     })
     .slice(0, 4);

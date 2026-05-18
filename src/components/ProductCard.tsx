@@ -6,9 +6,10 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const discount = Math.round(
-    ((product.msrp - product.currentLowest) / product.msrp) * 100
-  );
+  const discount =
+    product.currentLowest !== null
+      ? Math.round(((product.msrp - product.currentLowest) / product.msrp) * 100)
+      : 0;
   const hasDiscount = discount > 0;
 
   return (
@@ -61,8 +62,8 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Pricing */}
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-2xl font-bold text-white">
-              C${product.currentLowest}
+            <p className={`text-2xl font-bold ${product.currentLowest !== null ? "text-white" : "text-gray-500"}`}>
+              {product.currentLowest !== null ? `C$${product.currentLowest.toFixed(2)}` : "Not Available"}
             </p>
             {hasDiscount && (
               <p className="text-sm text-gray-500 line-through">

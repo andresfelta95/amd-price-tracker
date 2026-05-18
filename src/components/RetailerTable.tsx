@@ -5,7 +5,7 @@ interface RetailerTableProps {
 }
 
 export default function RetailerTable({ retailers }: RetailerTableProps) {
-  const sorted = [...retailers].sort((a, b) => a.price - b.price);
+  const sorted = [...retailers].sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
   const lastChecked = retailers[0]?.lastChecked;
 
   return (

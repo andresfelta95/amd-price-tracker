@@ -24,7 +24,7 @@ async function getGpus(): Promise<Product[]> {
           [p.id]
         );
         const prices = rRes.rows.map((r) => r.price);
-        const currentLowest = prices.length ? Math.min(...prices) : p.msrp;
+        const currentLowest = prices.length ? Math.min(...prices) : null;
 
         // Count variants
         const vRes = await client.query(
@@ -50,9 +50,10 @@ async function getGpus(): Promise<Product[]> {
 
 export default async function GPUsPage() {
   const gpus = (await getGpus()) as (Product & { _variantCount?: number })[];
-  const lowest = gpus.length ? Math.min(...gpus.map((g) => g.currentLowest)) : 0;
-  const bestSavings = gpus.length
-    ? Math.max(...gpus.map((g) => Math.round(((g.msrp - g.currentLowest) / g.msrp) * 100)))
+  const priced = gpus.filter((g) => g.currentLowest !== null);
+  const lowest = priced.length ? Math.min(...priced.map((g) => g.currentLowest as number)) : null;
+  const bestSavings = priced.length
+    ? Math.max(...priced.map((g) => Math.round(((g.msrp - (g.currentLowest as number)) / g.msrp) * 100)))
     : 0;
   const totalVariants = gpus.reduce((acc, g) => acc + (g._variantCount ?? 0), 0);
 
@@ -75,7 +76,7 @@ export default async function GPUsPage() {
         </div>
         <div className="bg-amd-gray border border-gray-700 rounded-xl p-4">
           <p className="text-gray-400 text-sm">Lowest Price</p>
-          <p className="text-2xl font-bold text-green-400">C${lowest.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-green-400">{lowest !== null ? `C$${lowest.toFixed(2)}` : "—"}</p>
         </div>
         <div className="bg-amd-gray border border-gray-700 rounded-xl p-4">
           <p className="text-gray-400 text-sm">Best Savings</p>

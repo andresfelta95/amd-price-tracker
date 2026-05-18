@@ -36,7 +36,7 @@ export interface Product {
   specs: Record<string, string>;
   msrp: number;
   releaseDate?: string;
-  currentLowest: number;
+  currentLowest: number | null;
   retailers: Retailer[];
   priceHistory: PricePoint[];
   variants?: GpuVariant[];

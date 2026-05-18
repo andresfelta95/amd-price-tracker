@@ -10,7 +10,7 @@ interface AlertFormProps {
 
 export default function AlertForm({ product }: AlertFormProps) {
   const [targetPrice, setTargetPrice] = useState(
-    Math.floor(product.currentLowest * 0.9).toString()
+    product.currentLowest !== null ? Math.floor(product.currentLowest * 0.9).toString() : ""
   );
   const [email, setEmail] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
@@ -26,8 +26,8 @@ export default function AlertForm({ product }: AlertFormProps) {
       productId: product.id,
       productName: product.name,
       targetPrice: price,
-      currentPrice: product.currentLowest,
-      isTriggered: product.currentLowest <= price,
+      currentPrice: product.currentLowest ?? 0,
+      isTriggered: product.currentLowest !== null && product.currentLowest <= price,
       createdAt: new Date().toISOString(),
       email,
     };
@@ -81,7 +81,7 @@ export default function AlertForm({ product }: AlertFormProps) {
               required
             />
             <p className="text-gray-500 text-xs mt-1">
-              Current lowest: C${product.currentLowest}
+              Current lowest: {product.currentLowest !== null ? `C$${product.currentLowest.toFixed(2)}` : "Not Available"}
             </p>
           </div>
           <div>

@@ -24,7 +24,7 @@ async function getCpus(): Promise<Product[]> {
           [p.id]
         );
         const prices = rRes.rows.map((r) => r.price);
-        const currentLowest = prices.length ? Math.min(...prices) : p.msrp;
+        const currentLowest = prices.length ? Math.min(...prices) : null;
         return { ...p, specs: p.specs, currentLowest, retailers: [], priceHistory: [] };
       })
     );
@@ -35,9 +35,10 @@ async function getCpus(): Promise<Product[]> {
 
 export default async function CPUsPage() {
   const cpus = await getCpus();
-  const lowest = cpus.length ? Math.min(...cpus.map((c) => c.currentLowest)) : 0;
-  const bestSavings = cpus.length
-    ? Math.max(...cpus.map((c) => Math.round(((c.msrp - c.currentLowest) / c.msrp) * 100)))
+  const priced = cpus.filter((c) => c.currentLowest !== null);
+  const lowest = priced.length ? Math.min(...priced.map((c) => c.currentLowest as number)) : null;
+  const bestSavings = priced.length
+    ? Math.max(...priced.map((c) => Math.round(((c.msrp - (c.currentLowest as number)) / c.msrp) * 100)))
     : 0;
 
   return (
@@ -55,7 +56,7 @@ export default async function CPUsPage() {
         </div>
         <div className="bg-amd-gray border border-gray-700 rounded-xl p-4">
           <p className="text-gray-400 text-sm">Lowest Price</p>
-          <p className="text-2xl font-bold text-green-400">C${lowest.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-green-400">{lowest !== null ? `C$${lowest.toFixed(2)}` : "—"}</p>
         </div>
         <div className="bg-amd-gray border border-gray-700 rounded-xl p-4">
           <p className="text-gray-400 text-sm">Best Savings</p>

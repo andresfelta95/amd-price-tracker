@@ -58,7 +58,7 @@ async function getProduct(id: string): Promise<Product | null> {
     }));
 
     const currentLowest =
-      retailers.length > 0 ? Math.min(...retailers.map((r) => r.price)) : p.msrp;
+      retailers.length > 0 ? Math.min(...retailers.map((r) => r.price)) : null;
 
     let variants: GpuVariant[] | undefined;
     if (p.category === "gpu") {
@@ -136,9 +136,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const product = await getProduct(params.id);
   if (!product) notFound();
 
-  const discount = Math.round(
-    ((product.msrp - product.currentLowest) / product.msrp) * 100
-  );
+  const discount =
+    product.currentLowest !== null
+      ? Math.round(((product.msrp - product.currentLowest) / product.msrp) * 100)
+      : 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
@@ -160,10 +161,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <div className="lg:col-span-2">
           <div className="flex flex-col sm:flex-row gap-6">
-            <div className="w-full sm:w-48 h-48 bg-amd-gray border border-gray-700 rounded-xl flex items-center justify-center shrink-0">
-              <span className="text-6xl">
-                {product.category === "cpu" ? "🔲" : "🎮"}
-              </span>
+            <div className="w-full sm:w-48 h-48 bg-amd-gray border border-gray-700 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+              {product.image && product.image !== '/cpu-placeholder.svg' && product.image !== '/gpu-placeholder.svg' ? (
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-full object-contain p-3"
+                />
+              ) : (
+                <span className="text-6xl">
+                  {product.category === "cpu" ? "🔲" : "🎮"}
+                </span>
+              )}
             </div>
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -189,8 +198,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </div>
               <h1 className="text-3xl font-bold text-white mb-3">{product.name}</h1>
               <div className="flex items-end gap-3 mb-4">
-                <span className="text-4xl font-bold text-white">
-                  C${product.currentLowest.toFixed(2)}
+                <span className={`text-4xl font-bold ${product.currentLowest !== null ? "text-white" : "text-gray-500"}`}>
+                  {product.currentLowest !== null ? `C$${product.currentLowest.toFixed(2)}` : "Not Available"}
                 </span>
                 {discount > 0 && (
                   <span className="text-xl text-gray-500 line-through mb-1">
