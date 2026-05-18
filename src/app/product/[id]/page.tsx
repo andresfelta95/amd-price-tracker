@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import pool from "@/lib/db";
@@ -117,11 +119,6 @@ async function getProduct(id: string): Promise<Product | null> {
   } finally {
     client.release();
   }
-}
-
-export async function generateStaticParams() {
-  const res = await pool.query(`SELECT id FROM products`);
-  return res.rows.map((r) => ({ id: r.id }));
 }
 
 export async function generateMetadata({ params }: ProductPageProps) {

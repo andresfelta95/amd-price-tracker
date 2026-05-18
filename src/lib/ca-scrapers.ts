@@ -1,19 +1,18 @@
 /**
  * Canadian retailer price fetching.
  *
- * Sources by reliability:
- * 1. Best Buy CA  — unofficial JSON API, no key needed, very reliable
- * 2. Newegg.ca    — HTML scrape, works most of the time
- * 3. Memory Express — HTML scrape, works reliably (server-rendered)
- * 4. Canada Computers — HTML scrape, works reliably (server-rendered)
- * 5. Amazon.ca    — blocked by bot detection, skipped
+ * Status (May 2026):
+ * - Newegg.ca:        ✅ HTML scrape — reliable
+ * - Best Buy Canada:  ✅ HTML scrape — __NEXT_DATA__ JSON extraction
+ * - Memory Express:   ❌ Cloudflare protection
+ * - Canada Computers: ❌ JS-rendered via Unbxd (prices not in HTML)
  */
 
 import axios from "axios";
 import * as cheerio from "cheerio";
 
 export interface CaPrice {
-  retailer: string;   // must match retailers.name in DB
+  retailer: string; // must match retailers.name in DB
   price: number | null;
   inStock: boolean;
   url: string;
@@ -25,62 +24,16 @@ const CA_HEADERS = {
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
   "Accept-Language": "en-CA,en;q=0.9",
-  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+  "Cache-Control": "no-cache",
+  Pragma: "no-cache",
 };
 
-// ── Best Buy Canada (JSON API, no key) ────────────────────────────────────────
-export async function fetchBestBuyCA(query: string): Promise<CaPrice> {
-  const url = `https://www.bestbuy.ca/api/2.0/page/search?lang=en-CA&query=${encodeURIComponent(query)}&pageSize=5`;
-  try {
-    const res = await axios.get(url, {
-      headers: { ...CA_HEADERS, Accept: "application/json" },
-      timeout: 12000,
-    });
-
-    // Response shape varies — try multiple paths
-    const products =
-      res.data?.products ??
-      res.data?.catalogSummaries ??
-      res.data?.searchResults?.products ??
-      [];
-
-    if (!products.length) {
-      // Fallback: try the search page JSON embedded in a script
-      return { retailer: "Best Buy Canada", price: null, inStock: false, url, source: "api", error: "No results" };
-    }
-
-    const item = products[0];
-    const price =
-      typeof item.salePrice === "number" ? item.salePrice :
-      typeof item.regularPrice === "number" ? item.regularPrice :
-      typeof item.priceWithoutEhf === "number" ? item.priceWithoutEhf :
-      null;
-
-    const inStock =
-      item.availability?.toLowerCase() !== "soldout" &&
-      item.availability?.toLowerCase() !== "sold out" &&
-      item.onlineAvailability !== false;
-
-    const productUrl = item.productUrl
-      ? `https://www.bestbuy.ca${item.productUrl}`
-      : `https://www.bestbuy.ca/en-ca/search?query=${encodeURIComponent(query)}`;
-
-    return { retailer: "Best Buy Canada", price, inStock, url: productUrl, source: "api" };
-  } catch (err) {
-    return {
-      retailer: "Best Buy Canada", price: null, inStock: false,
-      url: `https://www.bestbuy.ca/en-ca/search?query=${encodeURIComponent(query)}`,
-      source: "api",
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
-}
-
-// ── Newegg.ca ────────────────────────────────────────────────────────────────
+// ── Newegg.ca ─────────────────────────────────────────────────────────────────
 export async function scrapeNeweggCA(query: string): Promise<CaPrice> {
   const url = `https://www.newegg.ca/p/pl?d=${encodeURIComponent(query)}&N=4131`;
   try {
-    const { data } = await axios.get(url, { headers: CA_HEADERS, timeout: 12000 });
+    const { data } = await axios.get(url, { headers: CA_HEADERS, timeout: 15000 });
     const $ = cheerio.load(data);
 
     const priceStr = $(".price-current strong").first().text().replace(/,/g, "");
@@ -89,58 +42,123 @@ export async function scrapeNeweggCA(query: string): Promise<CaPrice> {
     const price = parseFloat(combined) || null;
     const outOfStock = $(".item-stock").first().text().toLowerCase().includes("out of stock");
 
-    return { retailer: "Newegg.ca", price, inStock: !outOfStock && price !== null, url, source: "scrape" };
+    return {
+      retailer: "Newegg.ca",
+      price,
+      inStock: !outOfStock && price !== null,
+      url,
+      source: "scrape",
+    };
   } catch (err) {
-    return { retailer: "Newegg.ca", price: null, inStock: false, url, source: "scrape", error: String(err) };
+    return {
+      retailer: "Newegg.ca",
+      price: null,
+      inStock: false,
+      url,
+      source: "scrape",
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
-// ── Memory Express ───────────────────────────────────────────────────────────
+// ── Best Buy Canada ───────────────────────────────────────────────────────────
+// Extracts product data from __NEXT_DATA__ JSON embedded in the search page.
+export async function fetchBestBuyCA(query: string): Promise<CaPrice> {
+  const searchUrl = `https://www.bestbuy.ca/en-ca/search?query=${encodeURIComponent(query)}`;
+  try {
+    const { data } = await axios.get(searchUrl, {
+      headers: {
+        ...CA_HEADERS,
+        Referer: "https://www.google.ca/",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "cross-site",
+      },
+      timeout: 15000,
+    });
+
+    const $ = cheerio.load(data);
+
+    // Try __NEXT_DATA__ JSON first
+    const nextDataScript = $("#__NEXT_DATA__").html();
+    if (nextDataScript) {
+      const nextData = JSON.parse(nextDataScript);
+      const products =
+        nextData?.props?.pageProps?.products ??
+        nextData?.props?.pageProps?.searchResults?.products ??
+        nextData?.props?.initialState?.search?.products ??
+        [];
+
+      if (products.length > 0) {
+        const item = products[0];
+        const price =
+          typeof item.salePrice === "number" ? item.salePrice :
+          typeof item.regularPrice === "number" ? item.regularPrice :
+          null;
+        const inStock = item.availability !== "SoldOut" && item.onlineAvailability !== false;
+        const productUrl = item.productUrl
+          ? `https://www.bestbuy.ca${item.productUrl}`
+          : searchUrl;
+        return { retailer: "Best Buy Canada", price, inStock, url: productUrl, source: "scrape" };
+      }
+    }
+
+    // Fallback: look for price in rendered HTML
+    const priceText =
+      $("[data-automation='productListingPrice']").first().text() ||
+      $("[class*='productItemPrice']").first().text() ||
+      $("[class*='price_']").first().text();
+    const price = parseFloat(priceText.replace(/[^0-9.]/g, "")) || null;
+
+    return {
+      retailer: "Best Buy Canada",
+      price,
+      inStock: price !== null,
+      url: searchUrl,
+      source: "scrape",
+      ...(price === null ? { error: "No price found in page" } : {}),
+    };
+  } catch (err) {
+    return {
+      retailer: "Best Buy Canada",
+      price: null,
+      inStock: false,
+      url: searchUrl,
+      source: "scrape",
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+// ── Memory Express ────────────────────────────────────────────────────────────
+// Protected by Cloudflare — returns null gracefully.
 export async function scrapeMemoryExpress(query: string): Promise<CaPrice> {
   const url = `https://www.memoryexpress.com/Search/Products?Search=${encodeURIComponent(query)}`;
-  try {
-    const { data } = await axios.get(url, { headers: CA_HEADERS, timeout: 12000 });
-    const $ = cheerio.load(data);
-
-    // Memory Express server-rendered: price lives in .Price or .PIPrice
-    const priceText =
-      $(".PIPrice .Price").first().text() ||
-      $(".price-current").first().text() ||
-      $("[class*='Price']").first().text();
-    const price = parseFloat(priceText.replace(/[^0-9.]/g, "")) || null;
-    const outOfStock =
-      $(".PINotInStock").length > 0 ||
-      $("[class*='OutOfStock']").length > 0;
-
-    return { retailer: "Memory Express", price, inStock: !outOfStock && price !== null, url, source: "scrape" };
-  } catch (err) {
-    return { retailer: "Memory Express", price: null, inStock: false, url, source: "scrape", error: String(err) };
-  }
+  return {
+    retailer: "Memory Express",
+    price: null,
+    inStock: false,
+    url,
+    source: "scrape",
+    error: "Blocked by Cloudflare",
+  };
 }
 
-// ── Canada Computers ─────────────────────────────────────────────────────────
+// ── Canada Computers ──────────────────────────────────────────────────────────
+// Prices loaded via JS (Unbxd engine) — returns null gracefully.
 export async function scrapeCanadaComputers(query: string): Promise<CaPrice> {
-  const url = `https://www.canadacomputers.com/search_results.php?keywords=${encodeURIComponent(query)}`;
-  try {
-    const { data } = await axios.get(url, { headers: CA_HEADERS, timeout: 12000 });
-    const $ = cheerio.load(data);
-
-    const priceText =
-      $(".h2-big").first().text() ||
-      $(".price-section").first().text() ||
-      $("[class*='product-price']").first().text();
-    const price = parseFloat(priceText.replace(/[^0-9.]/g, "")) || null;
-    const outOfStock =
-      $("[class*='outofstock']").length > 0 ||
-      $("[class*='OutOfStock']").length > 0;
-
-    return { retailer: "Canada Computers", price, inStock: !outOfStock && price !== null, url, source: "scrape" };
-  } catch (err) {
-    return { retailer: "Canada Computers", price: null, inStock: false, url, source: "scrape", error: String(err) };
-  }
+  const url = `https://www.canadacomputers.com/en/search?q=${encodeURIComponent(query)}`;
+  return {
+    retailer: "Canada Computers",
+    price: null,
+    inStock: false,
+    url,
+    source: "scrape",
+    error: "JS-rendered prices (Unbxd)",
+  };
 }
 
-// ── Aggregate (all CA retailers) ─────────────────────────────────────────────
+// ── Aggregate ─────────────────────────────────────────────────────────────────
 export async function fetchAllCAPrices(productName: string): Promise<CaPrice[]> {
   const results = await Promise.allSettled([
     fetchBestBuyCA(productName),
@@ -149,9 +167,16 @@ export async function fetchAllCAPrices(productName: string): Promise<CaPrice[]> 
     scrapeCanadaComputers(productName),
   ]);
 
+  const fallbacks = ["Best Buy Canada", "Newegg.ca", "Memory Express", "Canada Computers"];
   return results.map((r, i) => {
-    const fallbackRetailer = ["Best Buy Canada", "Newegg.ca", "Memory Express", "Canada Computers"][i];
     if (r.status === "fulfilled") return r.value;
-    return { retailer: fallbackRetailer, price: null, inStock: false, url: "", source: "scrape" as const, error: "Request failed" };
+    return {
+      retailer: fallbacks[i],
+      price: null,
+      inStock: false,
+      url: "",
+      source: "scrape" as const,
+      error: "Request failed",
+    };
   });
 }

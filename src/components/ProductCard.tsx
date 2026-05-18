@@ -14,11 +14,18 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link href={`/product/${product.id}`}>
       <div className="bg-amd-gray border border-gray-700 rounded-xl p-5 hover:border-amd-red transition-all duration-200 hover:shadow-lg hover:shadow-amd-red/10 group">
-        {/* Product image placeholder */}
         <div className="w-full h-40 bg-gray-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
-          <div className="text-4xl">
-            {product.category === "cpu" ? "🔲" : "🎮"}
-          </div>
+          {product.image && product.image !== '/cpu-placeholder.svg' && product.image !== '/gpu-placeholder.svg' ? (
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-contain p-2"
+            />
+          ) : (
+            <div className="text-4xl">
+              {product.category === "cpu" ? "🔲" : "🎮"}
+            </div>
+          )}
         </div>
 
         {/* Badge */}

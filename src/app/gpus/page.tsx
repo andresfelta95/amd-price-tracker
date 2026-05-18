@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import ProductCard from "@/components/ProductCard";
 import pool from "@/lib/db";
 import { Product } from "@/lib/types";

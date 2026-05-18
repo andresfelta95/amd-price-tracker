@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import pool from "@/lib/db";
