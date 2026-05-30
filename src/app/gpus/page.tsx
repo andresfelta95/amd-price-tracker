@@ -18,12 +18,16 @@ async function getGpus(): Promise<Product[]> {
     return Promise.all(
       pRes.rows.map(async (p) => {
         const rRes = await client.query(
-          `SELECT DISTINCT ON (r.id) ps.price::float
+          `SELECT DISTINCT ON (r.id) r.name, r.url, ps.price::float AS price, ps.in_stock, ps.recorded_at
            FROM price_snapshots ps JOIN retailers r ON r.id=ps.retailer_id
            WHERE ps.product_id=$1 ORDER BY r.id, ps.recorded_at DESC`,
           [p.id]
         );
-        const prices = rRes.rows.map((r) => r.price);
+        const retailers = rRes.rows.map((r) => ({
+          name: r.name, url: r.url, price: r.price,
+          inStock: r.in_stock, lastChecked: String(r.recorded_at),
+        }));
+        const prices = retailers.map((r) => r.price);
         const currentLowest = prices.length ? Math.min(...prices) : null;
 
         // Count variants
@@ -37,7 +41,7 @@ async function getGpus(): Promise<Product[]> {
           ...p,
           specs: p.specs,
           currentLowest,
-          retailers: [],
+          retailers,
           priceHistory: [],
           _variantCount: variantCount,
         } as Product & { _variantCount: number };
