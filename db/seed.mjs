@@ -239,6 +239,86 @@ const PRODUCTS = [
       { brand:'XFX',        variant:'Speedster MERC 310', full_name:'XFX Speedster MERC 310 RX 7800 XT 16GB', retailer:'Amazon.ca', price:609, url:'https://www.amazon.ca/s?k=XFX+RX+7800+XT', inStock:true },
     ],
   },
+
+  // ── 2026 additions: Ryzen 9000 X3D gaming chips + still-selling RDNA 3 budget GPUs ──
+  {
+    id: 'ryzen-7-9850x3d', name: 'AMD Ryzen 7 9850X3D', category: 'cpu',
+    image: '/products/ryzen-7-9850x3d.jpg', msrp: 679,
+    release_date: '2026-01-29',
+    specs: { Cores:'8', Threads:'16', 'Base Clock':'4.7 GHz', 'Boost Clock':'5.6 GHz', TDP:'120W', Socket:'AM5', Cache:'104MB', Architecture:'Zen 5 (3D V-Cache)' },
+    retailers: [
+      { name:'Amazon.ca',        price:679, url:'https://www.amazon.ca/s?k=AMD+Ryzen+7+9850X3D', inStock:true },
+      { name:'Newegg.ca',        price:689, url:'https://www.newegg.ca/p/pl?d=AMD+Ryzen+7+9850X3D', inStock:true },
+      { name:'Canada Computers', price:679, url:'https://www.canadacomputers.com/en/search?s=Ryzen+7+9850X3D', inStock:true },
+      { name:'Memory Express',   price:679, url:'https://www.memoryexpress.com/Search/Products?Search=Ryzen+7+9850X3D', inStock:true },
+      { name:'Best Buy Canada',  price:699, url:'https://www.bestbuy.ca/en-ca/search?query=AMD+Ryzen+7+9850X3D', inStock:true },
+    ],
+  },
+  {
+    id: 'ryzen-7-9800x3d', name: 'AMD Ryzen 7 9800X3D', category: 'cpu',
+    image: '/products/ryzen-7-9800x3d.jpg', msrp: 649,
+    release_date: '2024-11-07',
+    specs: { Cores:'8', Threads:'16', 'Base Clock':'4.7 GHz', 'Boost Clock':'5.2 GHz', TDP:'120W', Socket:'AM5', Cache:'104MB', Architecture:'Zen 5 (3D V-Cache)' },
+    retailers: [
+      { name:'Amazon.ca',        price:639, url:'https://www.amazon.ca/s?k=AMD+Ryzen+7+9800X3D', inStock:true },
+      { name:'Newegg.ca',        price:649, url:'https://www.newegg.ca/p/pl?d=AMD+Ryzen+7+9800X3D', inStock:true },
+      { name:'Canada Computers', price:639, url:'https://www.canadacomputers.com/en/search?s=Ryzen+7+9800X3D', inStock:true },
+      { name:'Memory Express',   price:629, url:'https://www.memoryexpress.com/Search/Products?Search=Ryzen+7+9800X3D', inStock:true },
+      { name:'Best Buy Canada',  price:659, url:'https://www.bestbuy.ca/en-ca/search?query=AMD+Ryzen+7+9800X3D', inStock:true },
+    ],
+  },
+  {
+    id: 'ryzen-9-9950x3d', name: 'AMD Ryzen 9 9950X3D', category: 'cpu',
+    image: '/products/ryzen-9-9950x3d.jpg', msrp: 949,
+    release_date: '2025-03-12',
+    specs: { Cores:'16', Threads:'32', 'Base Clock':'4.3 GHz', 'Boost Clock':'5.7 GHz', TDP:'170W', Socket:'AM5', Cache:'144MB', Architecture:'Zen 5 (3D V-Cache)' },
+    retailers: [
+      { name:'Amazon.ca',        price:929, url:'https://www.amazon.ca/s?k=AMD+Ryzen+9+9950X3D', inStock:true },
+      { name:'Newegg.ca',        price:949, url:'https://www.newegg.ca/p/pl?d=AMD+Ryzen+9+9950X3D', inStock:true },
+      { name:'Canada Computers', price:939, url:'https://www.canadacomputers.com/en/search?s=Ryzen+9+9950X3D', inStock:true },
+      { name:'Memory Express',   price:919, url:'https://www.memoryexpress.com/Search/Products?Search=Ryzen+9+9950X3D', inStock:true },
+      { name:'Best Buy Canada',  price:969, url:'https://www.bestbuy.ca/en-ca/search?query=AMD+Ryzen+9+9950X3D', inStock:true },
+    ],
+  },
+  {
+    id: 'ryzen-9-9900x3d', name: 'AMD Ryzen 9 9900X3D', category: 'cpu',
+    image: '/products/ryzen-9-9900x3d.jpg', msrp: 799,
+    release_date: '2025-03-12',
+    specs: { Cores:'12', Threads:'24', 'Base Clock':'4.4 GHz', 'Boost Clock':'5.5 GHz', TDP:'120W', Socket:'AM5', Cache:'140MB', Architecture:'Zen 5 (3D V-Cache)' },
+    retailers: [
+      { name:'Amazon.ca',        price:779, url:'https://www.amazon.ca/s?k=AMD+Ryzen+9+9900X3D', inStock:true },
+      { name:'Newegg.ca',        price:799, url:'https://www.newegg.ca/p/pl?d=AMD+Ryzen+9+9900X3D', inStock:true },
+      { name:'Canada Computers', price:789, url:'https://www.canadacomputers.com/en/search?s=Ryzen+9+9900X3D', inStock:true },
+      { name:'Memory Express',   price:769, url:'https://www.memoryexpress.com/Search/Products?Search=Ryzen+9+9900X3D', inStock:true },
+      { name:'Best Buy Canada',  price:819, url:'https://www.bestbuy.ca/en-ca/search?query=AMD+Ryzen+9+9900X3D', inStock:true },
+    ],
+  },
+  {
+    id: 'rx-7600-xt', name: 'AMD Radeon RX 7600 XT 16GB', category: 'gpu',
+    image: '/products/rx-7600-xt.jpg', msrp: 429,
+    release_date: '2024-01-24',
+    specs: { 'Compute Units':'32', 'Stream Processors':'2048', VRAM:'16GB GDDR6', 'Boost Clock':'2.76 GHz', 'Memory Bus':'128-bit', TDP:'190W', Architecture:'RDNA 3' },
+    retailers: [
+      { name:'Amazon.ca',        price:419, url:'https://www.amazon.ca/s?k=AMD+Radeon+RX+7600+XT', inStock:true },
+      { name:'Newegg.ca',        price:429, url:'https://www.newegg.ca/p/pl?d=AMD+Radeon+RX+7600+XT', inStock:true },
+      { name:'Canada Computers', price:419, url:'https://www.canadacomputers.com/en/search?s=Radeon+RX+7600+XT', inStock:true },
+      { name:'Memory Express',   price:409, url:'https://www.memoryexpress.com/Search/Products?Search=RX+7600+XT', inStock:true },
+      { name:'Best Buy Canada',  price:439, url:'https://www.bestbuy.ca/en-ca/search?query=AMD+Radeon+RX+7600+XT', inStock:true },
+    ],
+  },
+  {
+    id: 'rx-7600', name: 'AMD Radeon RX 7600 8GB', category: 'gpu',
+    image: '/products/rx-7600.jpg', msrp: 359,
+    release_date: '2023-05-25',
+    specs: { 'Compute Units':'32', 'Stream Processors':'2048', VRAM:'8GB GDDR6', 'Boost Clock':'2.66 GHz', 'Memory Bus':'128-bit', TDP:'165W', Architecture:'RDNA 3' },
+    retailers: [
+      { name:'Amazon.ca',        price:329, url:'https://www.amazon.ca/s?k=AMD+Radeon+RX+7600', inStock:true },
+      { name:'Newegg.ca',        price:339, url:'https://www.newegg.ca/p/pl?d=AMD+Radeon+RX+7600', inStock:true },
+      { name:'Canada Computers', price:329, url:'https://www.canadacomputers.com/en/search?s=Radeon+RX+7600', inStock:true },
+      { name:'Memory Express',   price:319, url:'https://www.memoryexpress.com/Search/Products?Search=RX+7600', inStock:true },
+      { name:'Best Buy Canada',  price:349, url:'https://www.bestbuy.ca/en-ca/search?query=AMD+Radeon+RX+7600', inStock:true },
+    ],
+  },
 ];
 
 // ── Price history generator ───────────────────────────────────────────────────

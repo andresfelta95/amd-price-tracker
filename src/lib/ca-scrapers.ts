@@ -159,6 +159,37 @@ export async function scrapeCanadaComputers(query: string): Promise<CaPrice> {
   }
 }
 
+// ── Amazon.ca ─────────────────────────────────────────────────────────────────
+// Amazon blocks plain HTTP scraping, so route through the Playwright microservice
+// (real stealth browser). Falls back to null gracefully on CAPTCHA / errors.
+export async function scrapeAmazonCA(query: string): Promise<CaPrice> {
+  const fallbackUrl = `https://www.amazon.ca/s?k=${encodeURIComponent(query)}`;
+  try {
+    const { data } = await axios.post(
+      `${PLAYWRIGHT_URL}/scrape`,
+      { retailer: "Amazon.ca", query },
+      { timeout: 45000 },
+    );
+    return {
+      retailer: "Amazon.ca",
+      price: typeof data?.price === "number" ? data.price : null,
+      inStock: !!data?.inStock,
+      url: data?.url || fallbackUrl,
+      source: "scrape",
+      error: data?.error,
+    };
+  } catch (err) {
+    return {
+      retailer: "Amazon.ca",
+      price: null,
+      inStock: false,
+      url: fallbackUrl,
+      source: "scrape",
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 // ── Aggregate ─────────────────────────────────────────────────────────────────
 export async function fetchAllCAPrices(productName: string): Promise<CaPrice[]> {
   const results = await Promise.allSettled([
@@ -166,9 +197,10 @@ export async function fetchAllCAPrices(productName: string): Promise<CaPrice[]> 
     scrapeNeweggCA(productName),
     scrapeMemoryExpress(productName),
     scrapeCanadaComputers(productName),
+    scrapeAmazonCA(productName),
   ]);
 
-  const fallbacks = ["Best Buy Canada", "Newegg.ca", "Memory Express", "Canada Computers"];
+  const fallbacks = ["Best Buy Canada", "Newegg.ca", "Memory Express", "Canada Computers", "Amazon.ca"];
   return results.map((r, i) => {
     if (r.status === "fulfilled") return r.value;
     return {
