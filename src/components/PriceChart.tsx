@@ -18,6 +18,8 @@ interface PriceChartProps {
   releaseDate?: string;
 }
 
+const MONO = "var(--font-mono), monospace";
+
 export default function PriceChart({ data, msrp, releaseDate }: PriceChartProps) {
   if (!data.length) return null;
 
@@ -41,38 +43,45 @@ export default function PriceChart({ data, msrp, releaseDate }: PriceChartProps)
   };
 
   return (
-    <div className="bg-amd-gray border border-gray-700 rounded-xl p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-semibold text-lg">Price History (CAD)</h3>
+    <div className="rounded border border-line bg-panel p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-signal-text">
+            <span className="text-ink-faint">//</span> TRACE
+          </p>
+          <h3 className="font-display text-lg font-semibold text-ink">Price history (CAD)</h3>
+        </div>
         {releaseDate && (
-          <span className="text-xs text-gray-500">
-            Since launch · {data.length} data points
+          <span className="font-mono text-[11px] text-ink-faint">
+            since launch · {data.length} pts
           </span>
         )}
       </div>
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data} margin={{ right: 60 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+        <LineChart data={data} margin={{ right: 84 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
           <XAxis
             dataKey="date"
-            stroke="#9CA3AF"
-            tick={{ fontSize: 11 }}
+            stroke="var(--text-faint)"
+            tick={{ fontSize: 11, fontFamily: MONO, fill: "var(--text-dim)" }}
             tickFormatter={tickFormatter}
             interval="preserveStartEnd"
           />
           <YAxis
-            stroke="#9CA3AF"
-            tick={{ fontSize: 11 }}
+            stroke="var(--text-faint)"
+            tick={{ fontSize: 11, fontFamily: MONO, fill: "var(--text-dim)" }}
             domain={[Math.floor(minPrice * 0.93), Math.ceil(maxPrice * 1.05)]}
             tickFormatter={(val) => `C$${val}`}
             width={70}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "#1a1a2e",
-              border: "1px solid #374151",
-              borderRadius: "8px",
-              color: "#fff",
+              backgroundColor: "var(--surface-2)",
+              border: "1px solid var(--line-strong)",
+              borderRadius: "4px",
+              color: "var(--text)",
+              fontFamily: MONO,
+              fontSize: "12px",
             }}
             formatter={(value: number) => [`C$${value.toFixed(2)}`, "Lowest price"]}
             labelFormatter={(label) =>
@@ -85,36 +94,37 @@ export default function PriceChart({ data, msrp, releaseDate }: PriceChartProps)
           />
           <ReferenceLine
             y={msrp}
-            stroke="#ED1C24"
+            stroke="var(--text-faint)"
             strokeDasharray="5 5"
             label={{
               value: `MSRP C$${msrp}`,
               position: "right",
-              fill: "#ED1C24",
+              fill: "var(--text-dim)",
               fontSize: 11,
+              fontFamily: MONO,
             }}
           />
           <Line
             type="monotone"
             dataKey="price"
-            stroke="#e94560"
+            stroke="var(--signal)"
             strokeWidth={2}
-            dot={data.length <= 30 ? { fill: "#e94560", r: 3 } : false}
-            activeDot={{ r: 5, stroke: "#fff", strokeWidth: 2 }}
+            dot={data.length <= 30 ? { fill: "var(--signal)", r: 3 } : false}
+            activeDot={{ r: 5, stroke: "var(--text)", strokeWidth: 2 }}
           />
         </LineChart>
       </ResponsiveContainer>
-      <div className="flex items-center gap-6 mt-4 text-sm">
+      <div className="mt-4 flex items-center gap-6 font-mono text-xs">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-amd-accent" />
-          <span className="text-gray-400">Daily lowest (CA)</span>
+          <div className="h-0.5 w-6 rounded-full bg-signal" />
+          <span className="text-ink-dim">daily lowest (CA)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-8 border-t-2 border-dashed border-amd-red" />
-          <span className="text-gray-400">MSRP</span>
+          <div className="w-6 border-t-2 border-dashed border-line-strong" />
+          <span className="text-ink-dim">MSRP</span>
         </div>
-        <div className="text-gray-400 ml-auto">
-          All-time low: <span className="text-green-400 font-semibold">C${minPrice.toFixed(2)}</span>
+        <div className="ml-auto text-ink-dim">
+          all-time low <span className="font-semibold text-gain">C${minPrice.toFixed(2)}</span>
         </div>
       </div>
     </div>

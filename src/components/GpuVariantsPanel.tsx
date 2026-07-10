@@ -7,7 +7,6 @@ import {
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
@@ -44,7 +43,14 @@ function MiniChart({ data, color }: { data: PricePoint[]; color: string }) {
         <XAxis dataKey="date" hide />
         <YAxis hide domain={["auto", "auto"]} />
         <Tooltip
-          contentStyle={{ backgroundColor: "#1a1a2e", border: "1px solid #374151", borderRadius: "6px", color: "#fff", fontSize: "12px" }}
+          contentStyle={{
+            backgroundColor: "var(--surface-2)",
+            border: "1px solid var(--line-strong)",
+            borderRadius: "4px",
+            color: "var(--text)",
+            fontFamily: "var(--font-mono), monospace",
+            fontSize: "12px",
+          }}
           formatter={(v: number) => [`C$${v.toFixed(2)}`, "Price"]}
           labelFormatter={(l) => new Date(l).toLocaleDateString("en-CA")}
         />
@@ -63,17 +69,21 @@ export default function GpuVariantsPanel({ variants }: GpuVariantsPanelProps) {
   const brandVariants = (brand: string) => variants.filter((v) => v.brand === brand);
 
   return (
-    <div className="bg-amd-gray border border-gray-700 rounded-xl p-6">
-      <h3 className="text-white font-semibold text-lg mb-4">GPU Variants by Brand</h3>
-      <div className="flex gap-2 flex-wrap mb-4">
+    <div className="rounded border border-line bg-panel p-6">
+      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-signal-text">
+        <span className="text-ink-faint">//</span> BOARD PARTNERS
+      </p>
+      <h3 className="mb-4 font-display text-lg font-semibold text-ink">GPU variants by brand</h3>
+      <div className="mb-4 flex flex-wrap gap-2">
         {brands.map((brand) => (
           <button
             key={brand}
             onClick={() => { setOpenBrand(brand); setSelectedVariant(null); }}
-            className="px-3 py-1.5 rounded-full text-sm font-medium transition-all"
+            aria-pressed={openBrand === brand}
+            className="rounded px-3 py-1.5 font-mono text-xs font-medium uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5"
             style={{
               backgroundColor: openBrand === brand ? getBrandColor(brand) : "transparent",
-              color: openBrand === brand ? "#fff" : "#9CA3AF",
+              color: openBrand === brand ? "#fff" : "var(--text-dim)",
               border: `1.5px solid ${getBrandColor(brand)}`,
             }}
           >
@@ -83,30 +93,40 @@ export default function GpuVariantsPanel({ variants }: GpuVariantsPanelProps) {
       </div>
 
       {openBrand && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {brandVariants(openBrand).map((v) => (
             <div
               key={v.id}
               onClick={() => setSelectedVariant(selectedVariant?.id === v.id ? null : v)}
-              className="cursor-pointer border border-gray-700 hover:border-gray-500 rounded-lg p-4 transition-all"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && setSelectedVariant(selectedVariant?.id === v.id ? null : v)}
+              className="cursor-pointer rounded border border-line bg-raised/40 p-4 transition-all duration-200 hover:border-line-strong hover:bg-raised"
               style={{ borderColor: selectedVariant?.id === v.id ? getBrandColor(openBrand) : undefined }}
             >
-              <div className="flex items-start justify-between mb-1">
-                <span className="text-white text-sm font-semibold leading-tight pr-2">{v.fullName}</span>
+              <div className="mb-1 flex items-start justify-between">
+                <span className="pr-2 text-sm font-semibold leading-tight text-ink">{v.fullName}</span>
                 <span
-                  className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${
-                    v.inStock ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
+                  className={`shrink-0 rounded-sm px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider ${
+                    v.inStock ? "bg-gain-soft text-gain" : "bg-signal-soft text-signal-text"
                   }`}
                 >
-                  {v.inStock ? "In Stock" : "OOS"}
+                  {v.inStock ? "in stock" : "oos"}
                 </span>
               </div>
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-xl font-bold text-white">
-                  {v.currentPrice != null ? `C$${v.currentPrice.toFixed(2)}` : "—"}
+              <div className="mt-2 flex items-center justify-between">
+                <span className="font-mono text-xl font-semibold text-ink">
+                  {v.currentPrice != null ? (
+                    <>
+                      <span className="mr-0.5 text-sm text-ink-faint">C$</span>
+                      {v.currentPrice.toFixed(2)}
+                    </>
+                  ) : (
+                    "—"
+                  )}
                 </span>
                 {v.retailerName && (
-                  <span className="text-xs text-gray-400">{v.retailerName}</span>
+                  <span className="font-mono text-[11px] text-ink-faint">{v.retailerName}</span>
                 )}
               </div>
               {selectedVariant?.id === v.id && v.priceHistory.length > 1 && (
@@ -118,7 +138,7 @@ export default function GpuVariantsPanel({ variants }: GpuVariantsPanelProps) {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="mt-2 block text-center py-1.5 rounded-lg text-sm font-medium bg-amd-red hover:bg-red-700 text-white transition-colors"
+                      className="mt-2 block rounded bg-signal py-1.5 text-center font-mono text-xs font-medium uppercase tracking-wider text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_-6px_var(--signal)]"
                     >
                       View at {v.retailerName ?? "Retailer"}
                     </a>

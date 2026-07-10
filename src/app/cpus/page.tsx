@@ -45,29 +45,36 @@ export default async function CPUsPage() {
     ? Math.max(...priced.map((c) => Math.round(((c.msrp - (c.currentLowest as number)) / c.msrp) * 100)))
     : 0;
 
+  const stats = [
+    { label: "CPUs tracked", value: String(cpus.length).padStart(2, "0"), tone: "text-ink" },
+    { label: "Lowest price", value: lowest !== null ? `C$${lowest.toFixed(2)}` : "—", tone: "text-gain" },
+    { label: "Best savings", value: `${bestSavings}% off`, tone: "text-signal-text" },
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
+    <div className="mx-auto max-w-7xl px-4 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">AMD Processors</h1>
-        <p className="text-gray-400">
+        <p className="mb-1 font-mono text-xs tracking-[0.2em] text-signal-text">
+          <span className="text-ink-faint">//</span> RYZEN · DESKTOP
+        </p>
+        <h1 className="mb-2 font-display text-3xl font-bold uppercase tracking-wide text-ink sm:text-4xl">
+          Processors
+        </h1>
+        <p className="max-w-2xl text-ink-dim">
           Canadian prices (CAD) across retailers for AMD Ryzen CPUs. Click any product to see full price history.
         </p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="bg-amd-gray border border-gray-700 rounded-xl p-4">
-          <p className="text-gray-400 text-sm">CPUs Tracked</p>
-          <p className="text-2xl font-bold text-white">{cpus.length}</p>
-        </div>
-        <div className="bg-amd-gray border border-gray-700 rounded-xl p-4">
-          <p className="text-gray-400 text-sm">Lowest Price</p>
-          <p className="text-2xl font-bold text-green-400">{lowest !== null ? `C$${lowest.toFixed(2)}` : "—"}</p>
-        </div>
-        <div className="bg-amd-gray border border-gray-700 rounded-xl p-4">
-          <p className="text-gray-400 text-sm">Best Savings</p>
-          <p className="text-2xl font-bold text-amd-red">{bestSavings}% off</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+      <dl className="mb-10 grid grid-cols-1 gap-px overflow-hidden rounded border border-line bg-line sm:grid-cols-3">
+        {stats.map((s) => (
+          <div key={s.label} className="bg-panel px-5 py-4">
+            <dt className="font-mono text-[11px] uppercase tracking-wider text-ink-faint">{s.label}</dt>
+            <dd className={`mt-1 font-mono text-2xl font-semibold ${s.tone}`}>{s.value}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {cpus.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}

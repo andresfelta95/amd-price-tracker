@@ -142,79 +142,89 @@ export default async function ProductPage({ params }: ProductPageProps) {
       : 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
+    <div className="mx-auto max-w-7xl px-4 py-10">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
-        <Link href="/" className="hover:text-white transition-colors">Home</Link>
-        <span>/</span>
+      <nav className="mb-8 flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-ink-faint">
+        <Link href="/" className="transition-colors hover:text-ink">Home</Link>
+        <span className="text-signal-text">/</span>
         <Link
           href={product.category === "cpu" ? "/cpus" : "/gpus"}
-          className="hover:text-white transition-colors"
+          className="transition-colors hover:text-ink"
         >
           {product.category === "cpu" ? "CPUs" : "GPUs"}
         </Link>
-        <span>/</span>
-        <span className="text-white">{product.name}</span>
+        <span className="text-signal-text">/</span>
+        <span className="text-ink-dim">{product.name}</span>
       </nav>
 
       {/* Product header */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+      <div className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <div className="flex flex-col sm:flex-row gap-6">
-            <div className="w-full sm:w-48 h-48 bg-amd-gray border border-gray-700 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+          <div className="flex flex-col gap-6 sm:flex-row">
+            <div className="corner-frame flex h-48 w-full shrink-0 items-center justify-center overflow-hidden rounded border border-line bg-panel sm:w-48">
               {product.image && product.image !== '/cpu-placeholder.svg' && product.image !== '/gpu-placeholder.svg' ? (
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-full h-full object-contain p-3"
+                  className="h-full w-full object-contain p-3"
                 />
               ) : (
-                <span className="text-6xl">
-                  {product.category === "cpu" ? "🔲" : "🎮"}
+                <span className="font-mono text-sm uppercase tracking-widest text-ink-faint">
+                  {product.category === "cpu" ? "[ CPU ]" : "[ GPU ]"}
                 </span>
               )}
             </div>
             <div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="mb-2 flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-wider">
                 <span
-                  className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                  className={`rounded-sm px-1.5 py-0.5 ${
                     product.category === "cpu"
-                      ? "bg-orange-500/20 text-orange-400"
-                      : "bg-blue-500/20 text-blue-400"
+                      ? "bg-signal-soft text-signal-text"
+                      : "bg-raised text-ink-dim ring-1 ring-inset ring-line-strong"
                   }`}
                 >
-                  {product.category.toUpperCase()}
+                  {product.category}
                 </span>
                 {discount > 0 && (
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-500/20 text-green-400">
-                    -{discount}% below MSRP
+                  <span className="rounded-sm bg-gain-soft px-1.5 py-0.5 text-gain">
+                    ▼{discount}% below MSRP
                   </span>
                 )}
                 {product.releaseDate && (
-                  <span className="text-xs text-gray-500">
-                    Released {new Date(product.releaseDate).toLocaleDateString("en-CA", { year: "numeric", month: "short" })}
+                  <span className="text-ink-faint">
+                    released {new Date(product.releaseDate).toLocaleDateString("en-CA", { year: "numeric", month: "short" })}
                   </span>
                 )}
               </div>
-              <h1 className="text-3xl font-bold text-white mb-3">{product.name}</h1>
-              <div className="flex items-end gap-3 mb-4">
-                <span className={`text-4xl font-bold ${product.currentLowest !== null ? "text-white" : "text-gray-500"}`}>
-                  {product.currentLowest !== null ? `C$${product.currentLowest.toFixed(2)}` : "Not Available"}
+              <h1 className="mb-3 font-display text-3xl font-bold uppercase tracking-wide text-ink">
+                {product.name}
+              </h1>
+              <div className="mb-5 flex items-end gap-3">
+                <span className={`font-mono text-4xl font-semibold ${product.currentLowest !== null ? "text-ink" : "text-ink-faint"}`}>
+                  {product.currentLowest !== null ? (
+                    <>
+                      <span className="mr-1 text-xl text-ink-faint">C$</span>
+                      {product.currentLowest.toFixed(2)}
+                    </>
+                  ) : (
+                    "N/A"
+                  )}
                 </span>
                 {discount > 0 && (
-                  <span className="text-xl text-gray-500 line-through mb-1">
+                  <span className="mb-1 font-mono text-xl text-ink-faint line-through">
                     C${product.msrp.toFixed(2)}
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+              {/* Datasheet spec rows */}
+              <dl className="grid grid-cols-1 gap-px overflow-hidden rounded border border-line bg-line sm:grid-cols-2">
                 {Object.entries(product.specs).map(([key, value]) => (
-                  <div key={key}>
-                    <span className="text-gray-400 text-sm">{key}: </span>
-                    <span className="text-white text-sm font-medium">{value}</span>
+                  <div key={key} className="flex items-baseline justify-between gap-3 bg-panel px-3 py-2">
+                    <dt className="font-mono text-[11px] uppercase tracking-wider text-ink-faint">{key}</dt>
+                    <dd className="font-mono text-sm font-medium text-ink">{value}</dd>
                   </div>
                 ))}
-              </div>
+              </dl>
             </div>
           </div>
         </div>
@@ -224,7 +234,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       </div>
 
       {/* Price chart + retailers */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
         <PriceChart
           data={product.priceHistory}
           msrp={product.msrp}

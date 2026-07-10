@@ -2,27 +2,134 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Silicon telemetry console — design tokens ──────────────────────────────
+   Concept: a hardware datasheet brought to life. Die-black surfaces,
+   engineering-mono price readouts, ONE signal-red trace. docs/DESIGN.md. */
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-rgb: 26, 26, 46;
+  --bg: #0b0b0e;
+  --surface: #131318;
+  --surface-2: #1a1a21;
+  --line: #26262e;
+  --line-strong: #3a3a45;
+
+  --text: #edece8;
+  --text-dim: #a3a2ab;
+  --text-faint: #6b6a74;
+
+  --signal: #e8281f;        /* refined AMD red — surfaces, borders, fills   */
+  --signal-text: #ff6b5e;   /* red for text on dark (AA on --bg)            */
+  --signal-soft: rgba(232, 40, 31, 0.12);
+
+  --gain: #4ade80;          /* price drops / in stock                       */
+  --gain-soft: rgba(74, 222, 128, 0.12);
+  --loss: #fbbf24;          /* warnings / stale data                        */
+  --loss-soft: rgba(251, 191, 36, 0.12);
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+  color: var(--text);
+  background-color: var(--bg);
+  font-feature-settings: "tnum" 1; /* tabular figures — prices align */
 }
 
-/* Custom scrollbar */
+/* Graph-paper atmosphere: faint plotting grid + a red glow bleeding from
+   the top edge, like a powered trace on a dark PCB. */
+.console-bg {
+  background-image:
+    radial-gradient(ellipse 80% 40% at 50% -10%, rgba(232, 40, 31, 0.09), transparent 70%),
+    linear-gradient(to right, rgba(237, 236, 232, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(237, 236, 232, 0.025) 1px, transparent 1px);
+  background-size: 100% 100%, 48px 48px, 48px 48px;
+  background-attachment: fixed;
+}
+
+/* ── Corner brackets — the card signature. Two viewfinder ticks that switch
+      to signal red on hover, like a probe locking onto a component. ──────── */
+.corner-frame {
+  position: relative;
+}
+.corner-frame::before,
+.corner-frame::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--line-strong);
+  border-style: solid;
+  transition: border-color 0.2s ease-out;
+  pointer-events: none;
+}
+.corner-frame::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+}
+.corner-frame::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+}
+.corner-frame:hover::before,
+.corner-frame:hover::after,
+.corner-frame:focus-within::before,
+.corner-frame:focus-within::after {
+  border-color: var(--signal);
+}
+
+/* ── Price ticker tape (hero signature moment) ─────────────────────────── */
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 40s linear infinite;
+}
+.ticker-viewport:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+/* ── Hero load: staggered rise ──────────────────────────────────────────── */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.reveal {
+  animation: rise-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.reveal-2 { animation-delay: 0.08s; }
+.reveal-3 { animation-delay: 0.16s; }
+.reveal-4 { animation-delay: 0.26s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track { animation: none; flex-wrap: wrap; }
+  .reveal, .reveal-2, .reveal-3, .reveal-4 { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}
+
+/* ── Craft floor ────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--signal-text);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--signal);
+  color: #fff;
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #1a1a2e;
+  background: var(--bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #374151;
-  border-radius: 4px;
+  background: var(--line-strong);
+  border: 2px solid var(--bg);
+  border-radius: 5px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
+  background: var(--text-faint);
 }

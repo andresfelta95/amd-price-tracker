@@ -12,7 +12,7 @@ A full-featured Next.js web app for tracking AMD Ryzen CPU and Radeon GPU prices
 - **Price Alerts** — Set a target price and email to be notified when a product drops
 - **10 Products Tracked** — 5 AMD Ryzen CPUs + 5 AMD Radeon GPUs
 - **REST API** — Three API routes for prices, scraping, and alerts
-- **Dark AMD-themed UI** — Fully responsive with Tailwind CSS
+- **"Silicon telemetry console" UI** — datasheet-inspired dark design (Chakra Petch + IBM Plex, live price ticker, signal-red accent); see [docs/DESIGN.md](docs/DESIGN.md)
 
 ---
 

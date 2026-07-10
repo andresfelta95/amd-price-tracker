@@ -38,6 +38,65 @@ async function getHomeData() {
   }
 }
 
+/* Scrolling telemetry strip: every tracked product with its lowest CAD price.
+   Items are rendered twice so the CSS loop is seamless. */
+function PriceTicker({ products }: { products: Product[] }) {
+  const items = products.filter((p) => p.currentLowest !== null);
+  if (!items.length) return null;
+
+  const strip = (ariaHidden: boolean) => (
+    <div aria-hidden={ariaHidden} className="flex shrink-0 items-center">
+      {items.map((p) => {
+        const below = p.currentLowest !== null && p.currentLowest < p.msrp;
+        return (
+          <Link
+            key={`${ariaHidden}-${p.id}`}
+            href={`/product/${p.id}`}
+            tabIndex={ariaHidden ? -1 : 0}
+            className="group flex items-center gap-2 whitespace-nowrap border-r border-line px-5 py-2.5 font-mono text-[13px] transition-colors hover:bg-raised"
+          >
+            <span className="text-ink-dim group-hover:text-ink">{p.name.replace("AMD ", "")}</span>
+            <span className="font-semibold text-ink">C${p.currentLowest!.toFixed(0)}</span>
+            <span className={below ? "text-gain" : "text-ink-faint"}>{below ? "▼" : "•"}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <div className="ticker-viewport reveal-4 reveal overflow-hidden border-y border-line bg-panel/70">
+      <div className="ticker-track">
+        {strip(false)}
+        {strip(true)}
+      </div>
+    </div>
+  );
+}
+
+function SectionHeader({ index, title, href }: { index: string; title: string; href?: string }) {
+  return (
+    <div className="mb-6 flex items-end justify-between">
+      <div>
+        <p className="mb-1 font-mono text-xs tracking-[0.2em] text-signal-text">
+          <span className="text-ink-faint">//</span> {index}
+        </p>
+        <h2 className="font-display text-2xl font-bold uppercase tracking-wide text-ink sm:text-3xl">
+          {title}
+        </h2>
+      </div>
+      {href && (
+        <Link
+          href={href}
+          className="group font-mono text-[13px] uppercase tracking-wider text-ink-dim transition-colors hover:text-signal-text"
+        >
+          View all <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
+        </Link>
+      )}
+    </div>
+  );
+}
+
 export default async function Home() {
   const { products, retailerCount, variantCount } = await getHomeData();
 
@@ -52,61 +111,64 @@ export default async function Home() {
     })
     .slice(0, 4);
 
+  const stats = [
+    { value: String(products.length).padStart(2, "0"), label: "Products" },
+    { value: String(variantCount).padStart(2, "0"), label: "GPU variants" },
+    { value: String(retailerCount).padStart(2, "0"), label: "CA retailers" },
+    { value: "24/7", label: "Monitoring" },
+  ];
+
   return (
     <div>
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-amd-dark via-amd-gray to-amd-dark py-16 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-            AMD Price Tracker Canada
-          </h1>
-          <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-            Track Canadian prices (CAD) on AMD Ryzen processors and Radeon GPUs across retailers.
-            See full price history since launch, brand variants, and set alerts.
+      {/* Hero — oversized display type over the plotting grid */}
+      <section className="px-4 pb-10 pt-14 sm:pt-20">
+        <div className="mx-auto max-w-7xl">
+          <p className="reveal mb-4 font-mono text-xs tracking-[0.25em] text-signal-text">
+            <span className="text-ink-faint">//</span> CANADIAN PRICE TELEMETRY · CAD
           </p>
-          <div className="flex items-center justify-center gap-4">
+          <h1 className="reveal reveal-2 max-w-4xl font-display text-[clamp(2.6rem,7vw,5rem)] font-bold uppercase leading-[0.95] tracking-tight text-ink">
+            Every AMD chip.
+            <br />
+            Every <span className="text-signal-text">CA price</span>.
+            <br />
+            Since launch day.
+          </h1>
+          <div className="reveal reveal-3 mt-8 flex flex-wrap items-center gap-4">
             <Link
               href="/cpus"
-              className="bg-amd-red hover:bg-red-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+              className="rounded bg-signal px-7 py-3 font-display font-semibold uppercase tracking-wide text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-8px_var(--signal)] active:translate-y-0"
             >
               Browse CPUs
             </Link>
             <Link
               href="/gpus"
-              className="bg-gray-700 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+              className="rounded border border-line-strong px-7 py-3 font-display font-semibold uppercase tracking-wide text-ink transition-all duration-200 hover:-translate-y-0.5 hover:border-signal hover:text-signal-text active:translate-y-0"
             >
               Browse GPUs
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-12 max-w-xl mx-auto">
-            <div>
-              <p className="text-3xl font-bold text-amd-red">{products.length}</p>
-              <p className="text-gray-400 text-sm">Products</p>
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-amd-red">{variantCount}</p>
-              <p className="text-gray-400 text-sm">GPU Variants</p>
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-amd-red">{retailerCount}</p>
-              <p className="text-gray-400 text-sm">CA Retailers</p>
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-amd-red">24/7</p>
-              <p className="text-gray-400 text-sm">Monitoring</p>
-            </div>
-          </div>
+          {/* Telemetry readouts */}
+          <dl className="reveal reveal-3 mt-12 grid max-w-2xl grid-cols-2 gap-px overflow-hidden rounded border border-line bg-line sm:grid-cols-4">
+            {stats.map((s) => (
+              <div key={s.label} className="bg-panel px-5 py-4">
+                <dt className="order-last mt-1 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
+                  {s.label}
+                </dt>
+                <dd className="font-mono text-2xl font-semibold text-signal-text">{s.value}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 
+      {/* Live price tape */}
+      <PriceTicker products={products} />
+
       {/* Best Deals */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Best Deals Right Now</h2>
-          <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">🇨🇦 CAD prices</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <section className="mx-auto max-w-7xl px-4 pb-4 pt-14">
+        <SectionHeader index="01 · DEALS" title="Best deals right now" />
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {bestDeals.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
@@ -114,14 +176,9 @@ export default async function Home() {
       </section>
 
       {/* CPUs Preview */}
-      <section className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">AMD Processors</h2>
-          <Link href="/cpus" className="text-amd-red hover:text-red-400 text-sm font-medium transition-colors">
-            View All →
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <section className="mx-auto max-w-7xl px-4 py-12">
+        <SectionHeader index="02 · RYZEN" title="Processors" href="/cpus" />
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {cpus.slice(0, 3).map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
@@ -129,14 +186,9 @@ export default async function Home() {
       </section>
 
       {/* GPUs Preview */}
-      <section className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">AMD Graphics Cards</h2>
-          <Link href="/gpus" className="text-amd-red hover:text-red-400 text-sm font-medium transition-colors">
-            View All →
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <section className="mx-auto max-w-7xl px-4 pb-8">
+        <SectionHeader index="03 · RADEON" title="Graphics cards" href="/gpus" />
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {gpus.slice(0, 3).map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
