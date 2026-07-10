@@ -8,75 +8,78 @@ export default function AlertsPage() {
   const removeAlert = useAlertStore((s) => s.removeAlert);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
+    <div className="mx-auto max-w-4xl px-4 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Your Price Alerts</h1>
-        <p className="text-gray-400">
+        <p className="mb-1 font-mono text-xs tracking-[0.2em] text-signal-text">
+          <span className="text-ink-faint">//</span> WATCHLIST
+        </p>
+        <h1 className="mb-2 font-display text-3xl font-bold uppercase tracking-wide text-ink sm:text-4xl">
+          Price alerts
+        </h1>
+        <p className="text-ink-dim">
           Manage your price drop notifications. You&apos;ll be emailed when a product
           hits your target price.
         </p>
       </div>
 
       {alerts.length === 0 ? (
-        <div className="bg-amd-gray border border-gray-700 rounded-xl p-12 text-center">
-          <p className="text-5xl mb-4">🔔</p>
-          <h2 className="text-xl font-semibold text-white mb-2">
-            No alerts set
+        <div className="corner-frame rounded border border-line bg-panel p-12 text-center">
+          <p className="mb-4 font-mono text-sm uppercase tracking-widest text-ink-faint">[ no alerts armed ]</p>
+          <h2 className="mb-2 font-display text-xl font-semibold text-ink">
+            Nothing on the watchlist
           </h2>
-          <p className="text-gray-400 mb-6">
-            Browse products and set price alerts to get notified when prices
-            drop.
+          <p className="mb-6 text-sm text-ink-dim">
+            Browse products and set price alerts to get notified when prices drop.
           </p>
           <div className="flex items-center justify-center gap-3">
             <Link
               href="/cpus"
-              className="bg-amd-red hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              className="rounded bg-signal px-6 py-2.5 font-display font-semibold uppercase tracking-wide text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-8px_var(--signal)]"
             >
               Browse CPUs
             </Link>
             <Link
               href="/gpus"
-              className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              className="rounded border border-line-strong px-6 py-2.5 font-display font-semibold uppercase tracking-wide text-ink transition-all duration-200 hover:-translate-y-0.5 hover:border-signal hover:text-signal-text"
             >
               Browse GPUs
             </Link>
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {alerts.map((alert) => (
             <div
               key={alert.id}
-              className="bg-amd-gray border border-gray-700 rounded-xl p-5 flex items-center justify-between"
+              className="corner-frame flex items-center justify-between rounded border border-line bg-panel p-5"
             >
               <div className="flex-1">
                 <Link
                   href={`/product/${alert.productId}`}
-                  className="text-white font-semibold text-lg hover:text-amd-red transition-colors"
+                  className="font-display text-lg font-semibold text-ink transition-colors hover:text-signal-text"
                 >
                   {alert.productName}
                 </Link>
-                <div className="flex items-center gap-4 mt-1">
-                  <span className="text-gray-400 text-sm">
-                    Target: <span className="text-green-400 font-medium">C${alert.targetPrice}</span>
+                <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs">
+                  <span className="text-ink-dim">
+                    target <span className="font-semibold text-gain">C${alert.targetPrice}</span>
                   </span>
-                  <span className="text-gray-400 text-sm">
-                    Current: <span className="text-white font-medium">C${alert.currentPrice}</span>
+                  <span className="text-ink-dim">
+                    current <span className="font-semibold text-ink">C${alert.currentPrice}</span>
                   </span>
-                  <span className="text-gray-500 text-xs">
-                    {alert.email}
-                  </span>
+                  <span className="text-ink-faint">{alert.email}</span>
                 </div>
                 {alert.isTriggered && (
-                  <span className="inline-block mt-2 text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">
-                    Price target reached!
+                  <span className="mt-2 inline-block rounded-sm bg-gain-soft px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-gain">
+                    ▼ target reached
                   </span>
                 )}
               </div>
               <button
                 onClick={() => removeAlert(alert.id)}
-                className="text-gray-500 hover:text-red-400 transition-colors ml-4 p-2"
+                className="ml-4 rounded p-2 text-ink-faint transition-colors hover:bg-signal-soft hover:text-signal-text"
                 title="Remove alert"
+                aria-label={`Remove alert for ${alert.productName}`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

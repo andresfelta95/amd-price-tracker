@@ -50,58 +50,63 @@ export default function AlertForm({ product }: AlertFormProps) {
     setTimeout(() => setShowSuccess(false), 3000);
   };
 
+  const inputClass =
+    "w-full rounded border border-line-strong bg-raised px-3 py-2 font-mono text-sm text-ink placeholder:text-ink-faint transition-colors focus:border-signal focus:outline-none";
+
   return (
-    <div className="bg-amd-gray border border-gray-700 rounded-xl p-6">
-      <h3 className="text-white font-semibold text-lg mb-2">
-        Set Price Alert
-      </h3>
-      <p className="text-gray-400 text-sm mb-4">
+    <div className="corner-frame rounded border border-line bg-panel p-6">
+      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-signal-text">
+        <span className="text-ink-faint">//</span> ARM ALERT
+      </p>
+      <h3 className="mb-2 font-display text-lg font-semibold text-ink">Set price alert</h3>
+      <p className="mb-4 text-sm text-ink-dim">
         Get notified when the price drops to your target.
       </p>
 
       {showSuccess ? (
-        <div className="bg-green-500/20 border border-green-500/40 rounded-lg p-4 text-green-400 text-sm">
-          Alert created! You&apos;ll be notified when {product.name} drops to C$
-          {targetPrice}.
+        <div className="rounded border border-gain/40 bg-gain-soft p-4 font-mono text-sm text-gain" role="status">
+          ▼ Alert armed. You&apos;ll be notified when {product.name} drops to C${targetPrice}.
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="text-gray-400 text-sm block mb-1">
-              Target Price (C$)
+            <label htmlFor="alert-target" className="mb-1 block font-mono text-xs uppercase tracking-wider text-ink-dim">
+              Target price (C$)
             </label>
             <input
+              id="alert-target"
               type="number"
               value={targetPrice}
               onChange={(e) => setTargetPrice(e.target.value)}
               min="1"
               step="1"
-              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amd-red transition-colors"
+              className={inputClass}
               placeholder="Enter target price"
               required
             />
-            <p className="text-gray-500 text-xs mt-1">
-              Current lowest: {product.currentLowest !== null ? `C$${product.currentLowest.toFixed(2)}` : "Not Available"}
+            <p className="mt-1 font-mono text-[11px] text-ink-faint">
+              current lowest {product.currentLowest !== null ? `C$${product.currentLowest.toFixed(2)}` : "n/a"}
             </p>
           </div>
           <div>
-            <label className="text-gray-400 text-sm block mb-1">
-              Email Address
+            <label htmlFor="alert-email" className="mb-1 block font-mono text-xs uppercase tracking-wider text-ink-dim">
+              Email address
             </label>
             <input
+              id="alert-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amd-red transition-colors"
+              className={inputClass}
               placeholder="your@email.com"
               required
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-amd-red hover:bg-red-700 text-white font-medium py-2.5 rounded-lg transition-colors"
+            className="w-full rounded bg-signal py-2.5 font-display font-semibold uppercase tracking-wide text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-8px_var(--signal)] active:translate-y-0"
           >
-            Create Alert
+            Create alert
           </button>
         </form>
       )}

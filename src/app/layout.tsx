@@ -1,9 +1,25 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Chakra_Petch, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
-const inter = Inter({ subsets: ["latin"] });
+const display = Chakra_Petch({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
+});
+
+const sans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-sans",
+});
+
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
   title: "AMD Price Tracker — Find the Best Deals on AMD CPUs & GPUs",
@@ -18,15 +34,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${display.variable} ${sans.variable} ${mono.variable} font-sans console-bg`}>
         <Navbar />
         <main className="min-h-screen">{children}</main>
-        <footer className="bg-amd-dark border-t border-gray-700 py-8 mt-12">
-          <div className="max-w-7xl mx-auto px-4 text-center text-gray-500 text-sm">
-            <p>AMD Price Tracker — Not affiliated with AMD.</p>
-            <p className="mt-1">
-              Prices are fetched from public retailer pages and may not be 100%
-              accurate.
+        <footer className="mt-16 border-t border-line bg-panel/60">
+          <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-8 sm:flex-row sm:items-center sm:justify-between">
+            <p className="font-display text-sm font-semibold tracking-wide text-ink-dim">
+              AMD<span className="text-signal-text">//</span>TRACKER
+              <span className="ml-2 font-mono text-[11px] font-normal text-ink-faint">CA · CAD</span>
+            </p>
+            <p className="font-mono text-[11px] leading-relaxed text-ink-faint">
+              Not affiliated with AMD. Prices scraped from public retailer pages — verify before buying.
             </p>
           </div>
         </footer>
