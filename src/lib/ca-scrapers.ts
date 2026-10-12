@@ -1,11 +1,11 @@
 /**
  * Canadian retailer price fetching.
  *
- * Status (May 2026):
- * - Newegg.ca:        ✅ HTML scrape — reliable
- * - Best Buy Canada:  ✅ Playwright microservice (JS-rendered)
- * - Memory Express:   ✅ Playwright microservice (bypasses Cloudflare)
- * - Canada Computers: ✅ Playwright microservice (bypasses Unbxd JS rendering)
+ * - Canada Computers: plain HTTP — JSON-LD on search → product page price
+ * - Newegg.ca, Best Buy Canada, Memory Express, Amazon.ca: Playwright microservice
+ *   (real stealth browser). When a page loads but no price can be parsed from the
+ *   markup, the service can fall back to reading a screenshot with Claude
+ *   (`source: "vision"`). Bot-challenge pages come back as `error: "blocked"`.
  */
 
 import axios from "axios";
@@ -18,8 +18,15 @@ export interface CaPrice {
   price: number | null;
   inStock: boolean;
   url: string;
-  source: "api" | "scrape";
+  source: "api" | "scrape" | "vision";
   error?: string;
+}
+
+export interface FetchOptions {
+  /** Used by the vision fallback to reject implausible readings */
+  msrp?: number;
+  /** Allow the screenshot/vision fallback (scheduled runs only — it costs API credits) */
+  vision?: boolean;
 }
 
 const CA_HEADERS = {
@@ -30,66 +37,6 @@ const CA_HEADERS = {
   "Cache-Control": "no-cache",
   Pragma: "no-cache",
 };
-
-// ── Newegg.ca ─────────────────────────────────────────────────────────────────
-export async function scrapeNeweggCA(query: string): Promise<CaPrice> {
-  const url = `https://www.newegg.ca/p/pl?d=${encodeURIComponent(query)}&N=4131`;
-  try {
-    const { data } = await axios.get(url, { headers: CA_HEADERS, timeout: 15000 });
-    const $ = cheerio.load(data);
-
-    const priceStr = $(".price-current strong").first().text().replace(/,/g, "");
-    const priceSup = $(".price-current sup").first().text().replace(/[^0-9]/g, "");
-    const combined = priceSup ? `${priceStr}.${priceSup}` : priceStr;
-    const price = parseFloat(combined) || null;
-    const outOfStock = $(".item-stock").first().text().toLowerCase().includes("out of stock");
-
-    return {
-      retailer: "Newegg.ca",
-      price,
-      inStock: !outOfStock && price !== null,
-      url,
-      source: "scrape",
-    };
-  } catch (err) {
-    return {
-      retailer: "Newegg.ca",
-      price: null,
-      inStock: false,
-      url,
-      source: "scrape",
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
-}
-
-// ── Best Buy Canada ───────────────────────────────────────────────────────────
-// Akamai Bot Manager blocks datacenter IPs — returns null gracefully.
-export async function fetchBestBuyCA(query: string): Promise<CaPrice> {
-  const searchUrl = `https://www.bestbuy.ca/en-ca/search?query=${encodeURIComponent(query)}`;
-  return {
-    retailer: "Best Buy Canada",
-    price: null,
-    inStock: false,
-    url: searchUrl,
-    source: "scrape",
-    error: "Blocked by Akamai Bot Manager",
-  };
-}
-
-// ── Memory Express ────────────────────────────────────────────────────────────
-// Cloudflare challenge — returns null gracefully (Playwright times out).
-export async function scrapeMemoryExpress(query: string): Promise<CaPrice> {
-  const url = `https://www.memoryexpress.com/Search/Products?Search=${encodeURIComponent(query)}`;
-  return {
-    retailer: "Memory Express",
-    price: null,
-    inStock: false,
-    url,
-    source: "scrape",
-    error: "Blocked by Cloudflare",
-  };
-}
 
 // ── Canada Computers ──────────────────────────────────────────────────────────
 // Uses ?s= (PrestaShop server-side search) + product page itemprop price.
@@ -159,28 +106,27 @@ export async function scrapeCanadaComputers(query: string): Promise<CaPrice> {
   }
 }
 
-// ── Amazon.ca ─────────────────────────────────────────────────────────────────
-// Amazon blocks plain HTTP scraping, so route through the Playwright microservice
-// (real stealth browser). Falls back to null gracefully on CAPTCHA / errors.
-export async function scrapeAmazonCA(query: string): Promise<CaPrice> {
-  const fallbackUrl = `https://www.amazon.ca/s?k=${encodeURIComponent(query)}`;
+// ── Playwright microservice ──────────────────────────────────────────────────
+// Sites that block plain HTTP (CAPTCHA, Akamai, Cloudflare, JS-rendered) go
+// through a real browser. Errors degrade to a null price.
+async function viaPlaywright(retailer: string, query: string, fallbackUrl: string, opts: FetchOptions): Promise<CaPrice> {
   try {
     const { data } = await axios.post(
       `${PLAYWRIGHT_URL}/scrape`,
-      { retailer: "Amazon.ca", query },
-      { timeout: 45000 },
+      { retailer, query, msrp: opts.msrp, vision: !!opts.vision },
+      { timeout: 90000 },
     );
     return {
-      retailer: "Amazon.ca",
+      retailer,
       price: typeof data?.price === "number" ? data.price : null,
       inStock: !!data?.inStock,
       url: data?.url || fallbackUrl,
-      source: "scrape",
+      source: data?.source === "vision" ? "vision" : "scrape",
       error: data?.error,
     };
   } catch (err) {
     return {
-      retailer: "Amazon.ca",
+      retailer,
       price: null,
       inStock: false,
       url: fallbackUrl,
@@ -190,14 +136,30 @@ export async function scrapeAmazonCA(query: string): Promise<CaPrice> {
   }
 }
 
+export function scrapeNeweggCA(query: string, opts: FetchOptions = {}) {
+  return viaPlaywright("Newegg.ca", query, `https://www.newegg.ca/p/pl?d=${encodeURIComponent(query)}&N=4131`, opts);
+}
+
+export function fetchBestBuyCA(query: string, opts: FetchOptions = {}) {
+  return viaPlaywright("Best Buy Canada", query, `https://www.bestbuy.ca/en-ca/search?query=${encodeURIComponent(query)}`, opts);
+}
+
+export function scrapeMemoryExpress(query: string, opts: FetchOptions = {}) {
+  return viaPlaywright("Memory Express", query, `https://www.memoryexpress.com/Search/Products?Search=${encodeURIComponent(query)}`, opts);
+}
+
+export function scrapeAmazonCA(query: string, opts: FetchOptions = {}) {
+  return viaPlaywright("Amazon.ca", query, `https://www.amazon.ca/s?k=${encodeURIComponent(query)}`, opts);
+}
+
 // ── Aggregate ─────────────────────────────────────────────────────────────────
-export async function fetchAllCAPrices(productName: string): Promise<CaPrice[]> {
+export async function fetchAllCAPrices(productName: string, opts: FetchOptions = {}): Promise<CaPrice[]> {
   const results = await Promise.allSettled([
-    fetchBestBuyCA(productName),
-    scrapeNeweggCA(productName),
-    scrapeMemoryExpress(productName),
+    fetchBestBuyCA(productName, opts),
+    scrapeNeweggCA(productName, opts),
+    scrapeMemoryExpress(productName, opts),
     scrapeCanadaComputers(productName),
-    scrapeAmazonCA(productName),
+    scrapeAmazonCA(productName, opts),
   ]);
 
   const fallbacks = ["Best Buy Canada", "Newegg.ca", "Memory Express", "Canada Computers", "Amazon.ca"];

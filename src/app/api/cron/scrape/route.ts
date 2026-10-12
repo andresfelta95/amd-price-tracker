@@ -2,11 +2,14 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
+import { checkCronSecret } from "@/lib/cron";
 
-// POST /api/cron/scrape
+// POST /api/cron/scrape   (header: x-cron-secret: $CRON_SECRET)
 // Saves a price snapshot for a product+retailer into the DB.
 // Body: { productId, retailerId, price, inStock }
 export async function POST(request: NextRequest) {
+  const denied = checkCronSecret(request);
+  if (denied) return denied;
   try {
     const { productId, retailerId, price, inStock } = await request.json();
     if (!productId || !retailerId || price == null) {
