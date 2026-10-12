@@ -43,13 +43,28 @@ export interface Product {
 }
 
 export interface PriceAlert {
-  id: string;
+  id: number;
   productId: string;
-  variantId?: number;
   productName: string;
   targetPrice: number;
-  currentPrice: number;
-  isTriggered: boolean;
+  /** Cheapest fresh, in-stock price right now (null if none) */
+  currentPrice: number | null;
+  currentRetailer: string | null;
+  belowTarget: boolean;
+  active: boolean;
+  lastNotifiedAt: string | null;
+  lastNotifiedPrice: number | null;
   createdAt: string;
-  email: string;
+}
+
+export interface SessionInfo {
+  user: {
+    id: number;
+    email: string;
+    emailVerified: boolean;
+    telegramLinked: boolean;
+    notifyEmail: boolean;
+    notifyTelegram: boolean;
+  } | null;
+  alertCount: number;
 }

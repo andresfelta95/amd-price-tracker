@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
+import { lowestRecentPrice } from "@/lib/prices";
 import { Product, Retailer, PricePoint, GpuVariant } from "@/lib/types";
 
 async function fetchProduct(id: string): Promise<Product | null> {
@@ -51,7 +52,7 @@ async function fetchProduct(id: string): Promise<Product | null> {
     }));
 
     const currentLowest =
-      retailers.length > 0 ? Math.min(...retailers.map((r) => r.price)) : p.msrp;
+      lowestRecentPrice(rRes.rows);
 
     // GPU variants
     let variants: GpuVariant[] | undefined;

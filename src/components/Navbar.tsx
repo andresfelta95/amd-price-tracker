@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAlertStore } from "@/lib/store";
+import { useSession } from "@/lib/use-session";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const alerts = useAlertStore((s) => s.alerts);
+  const { session } = useSession();
+  const alertCount = session?.alertCount ?? 0;
 
+  // "Home" is hidden on phones (the logo links home) to make room for Log in/Account
   const links = [
     { href: "/", label: "Home" },
     { href: "/cpus", label: "CPUs" },
@@ -36,7 +38,7 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   aria-current={active ? "page" : undefined}
-                  className={`relative px-3 py-2 font-mono text-[13px] font-medium uppercase tracking-wider transition-colors sm:px-4 ${
+                  className={`${link.href === "/" ? "hidden sm:block " : ""}relative px-3 py-2 font-mono text-[13px] font-medium uppercase tracking-wider transition-colors sm:px-4 ${
                     active
                       ? "text-ink"
                       : "text-ink-dim hover:text-ink"
@@ -49,14 +51,24 @@ export default function Navbar() {
                       active ? "bg-signal opacity-100" : "opacity-0"
                     }`}
                   />
-                  {link.label === "Alerts" && alerts.length > 0 && (
+                  {link.label === "Alerts" && alertCount > 0 && (
                     <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-signal font-mono text-[11px] text-white">
-                      {alerts.length}
+                      {alertCount}
                     </span>
                   )}
                 </Link>
               );
             })}
+            {session && (
+              <Link
+                href={session.user ? "/account" : `/login?next=${encodeURIComponent(pathname)}`}
+                aria-current={pathname === "/account" ? "page" : undefined}
+                title={session.user?.email}
+                className="ml-1 rounded border border-line-strong px-2.5 py-1.5 font-mono text-[12px] font-medium uppercase tracking-wider text-ink-dim transition-colors hover:border-signal hover:text-ink sm:ml-2 sm:px-3"
+              >
+                {session.user ? "Account" : "Log in"}
+              </Link>
+            )}
           </div>
         </div>
       </div>
