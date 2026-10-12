@@ -64,7 +64,7 @@ Live at **https://amd.paisbru.com**.
 |---|---|---|
 | **Amazon.ca** | Playwright (stealth browser) | ✅ working |
 | **Canada Computers** | Plain HTTP: JSON-LD on search → product page price | ⚠️ partial — resolves most GPUs, fails for nearly all CPUs |
-| **Newegg.ca** | Playwright; listings hydrate after the `load` event | ✅ via browser (plain HTTP gets a CAPTCHA since 2026-09-10); paced 20s apart, occasionally serves an empty page |
+| **Newegg.ca** | Playwright; listings hydrate after the `load` event | ✅ via browser (plain HTTP gets a CAPTCHA since 2026-09-10); paced 30s apart; still serves empty (throttled) pages for some products |
 | **Best Buy Canada** | Playwright; reads the product JSON the page fetches (`?search=` URL) | ⚠️ working again (stubbed since May); Akamai IP-bans after a burst, so requests are paced 45s apart |
 | **Memory Express** | Playwright | ❌ Cloudflare challenge from this IP — detected and reported as `blocked` |
 
@@ -73,7 +73,7 @@ The browser scrapers pick the **cheapest listing of exactly the queried model**
 9060 XT 8GB vs 16GB), skipping refurbished/combo listings, priced within 0.4–2.5× MSRP,
 in-stock first.
 
-The service paces requests per retailer (Best Buy 45s, Newegg 20s apart) and, once a
+The service paces requests per retailer (Best Buy 45s, Newegg 30s apart) and, once a
 retailer answers `blocked`, skips it for a cooldown (Best Buy 6h, Newegg/Amazon 30 min,
 Memory Express 12h) instead of extending the ban. `GET playwright-scraper:4000/health`
 lists retailers in cooldown. A full run takes roughly 15 minutes.
