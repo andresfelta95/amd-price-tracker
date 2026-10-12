@@ -114,7 +114,7 @@ async function viaPlaywright(retailer: string, query: string, fallbackUrl: strin
     const { data } = await axios.post(
       `${PLAYWRIGHT_URL}/scrape`,
       { retailer, query, msrp: opts.msrp, vision: !!opts.vision },
-      { timeout: 90000 },
+      { timeout: 150000 }, // includes waiting in the per-retailer pacing queue
     );
     return {
       retailer,
