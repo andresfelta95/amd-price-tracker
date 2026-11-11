@@ -3,13 +3,17 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 
 import pool from "@/lib/db";
-import { fetchAllCAPrices } from "@/lib/ca-scrapers";
+import { getRetailerMap, scrapeAndSave } from "@/lib/snapshots";
+
+// Public endpoint (product page refresh button): rate-limited per product,
+// and never uses the paid screenshot/vision fallback.
+const COOLDOWN_MINUTES = 10;
 
 /**
  * GET /api/scrape?productId=rx-9070-xt
  *
  * Fetches live CA prices for a product, saves them as price_snapshots,
- * and returns the results with per-retailer status.
+ * and returns per-retailer status.
  */
 export async function GET(request: NextRequest) {
   const productId = request.nextUrl.searchParams.get("productId");
@@ -20,51 +24,34 @@ export async function GET(request: NextRequest) {
 
   const client = await pool.connect();
   try {
-    // Look up product name + retailer IDs
     const pRes = await client.query(
-      `SELECT id, name FROM products WHERE id = $1`,
+      `SELECT id, name, msrp::float,
+              (SELECT MAX(recorded_at) FROM price_snapshots WHERE product_id = products.id) AS last_scraped
+       FROM products WHERE id = $1`,
       [productId]
     );
     if (!pRes.rows.length) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
-    const productName = pRes.rows[0].name;
+    const product = pRes.rows[0];
 
-    // Get retailer ID map
-    const rRes = await client.query(`SELECT id, name FROM retailers`);
-    const retailerMap: Record<string, number> = {};
-    for (const r of rRes.rows) retailerMap[r.name] = r.id;
-
-    // Fetch live prices from all CA retailers
-    const prices = await fetchAllCAPrices(productName);
-
-    // Save snapshots for successful results
-    const saved: string[] = [];
-    const failed: string[] = [];
-
-    for (const p of prices) {
-      const rid = retailerMap[p.retailer];
-      if (!rid) continue;
-
-      if (p.price !== null) {
-        await client.query(
-          `INSERT INTO price_snapshots (product_id, retailer_id, price, in_stock)
-           VALUES ($1, $2, $3, $4)`,
-          [productId, rid, p.price, p.inStock]
-        );
-        saved.push(p.retailer);
-      } else {
-        failed.push(p.retailer);
-      }
+    const last: Date | null = product.last_scraped;
+    if (last && Date.now() - last.getTime() < COOLDOWN_MINUTES * 60 * 1000) {
+      return NextResponse.json(
+        { error: `Prices were refreshed less than ${COOLDOWN_MINUTES} minutes ago`, lastScraped: last.toISOString() },
+        { status: 429 }
+      );
     }
+
+    const { summary, prices } = await scrapeAndSave(client, product, await getRetailerMap(client), { vision: false });
 
     return NextResponse.json({
       productId,
-      productName,
+      productName: product.name,
       scrapedAt: new Date().toISOString(),
       results: prices,
-      saved,
-      failed,
+      saved: summary.saved,
+      failed: summary.failed,
     });
   } finally {
     client.release();

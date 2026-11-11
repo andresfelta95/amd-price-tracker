@@ -1,22 +1,23 @@
 # AMD Price Tracker CA
 
 Tracks AMD Ryzen CPU and Radeon GPU prices across **Canadian** retailers. Next.js 14
-front end, PostgreSQL price history, and a scheduled scraper that snapshots prices
-twice a day.
+front end, PostgreSQL price history, a scheduled scraper that snapshots prices twice
+a day, and per-user price alerts delivered by email or Telegram.
 
 Live at **https://amd.paisbru.com**.
 
 ---
 
-## Status (2026-08-24)
+## Status (2026-10-11)
 
 | Piece | State |
 |---|---|
 | App + UI | ✅ live, 18 products tracked |
-| Price history | ✅ 13,002 snapshots in Postgres |
-| Scheduled scraping | ⚠️ runs 02:00 + 14:00; the 02:00 run fails silently (see [Known issues](#known-issues)) |
-| Retailers | ⚠️ **3 of 5 live** — Best Buy CA and Memory Express are stubbed out |
-| Price alerts | ⚠️ stored in the DB and displayed, but **no notification is ever sent** |
+| Accounts | ✅ email + password, email verification, password reset |
+| Price alerts | ✅ per user; email (Resend) and/or Telegram, at most once a day while below target |
+| Scheduled scraping | ✅ 02:30 + 14:30 (moved off the 02:00 backup); failures are now logged |
+| Retailers | see [Retailers](#retailers) |
+| Screenshot/vision fallback | ✅ built; active once `ANTHROPIC_API_KEY` is set on the Playwright service |
 | GPU brand variants | ✅ 45 variants tracked with their own price history |
 
 ---
@@ -28,11 +29,14 @@ Live at **https://amd.paisbru.com**.
   ticks once the range passes 60 days). Seeded history goes back to 2022-12
 - **GPU brand variants** — individual AIB cards (ASUS TUF, Gigabyte Gaming OC, …)
   tracked separately from the reference SKU, each with its own price series
-- **Scheduled scraping** — host cron hits `/api/scrape-all` at 02:00 and 14:00 and
-  writes a snapshot per product/retailer
-- **On-demand scraping** — refresh button per product
-- **Price alerts** — set a target price; alerts persist in Postgres (delivery not
-  implemented, see below)
+- **Accounts** — sign up with email + password; product pages stay public, alerts
+  need an account. `/account` holds notification settings and Telegram linking
+- **Price alerts** — one per product per user. After every scheduled scrape the app
+  compares the cheapest **fresh (≤36h) in-stock** price with each target and notifies
+  through the user's enabled channels; while the price stays under target it reminds
+  once a day. Alerts can be paused/resumed; changing the target re-arms it
+- **Scheduled scraping** — host cron hits `/api/scrape-all` twice a day
+- **On-demand scraping** — refresh button per product (10-minute cooldown, no vision)
 - **"Silicon telemetry console" UI** — datasheet-inspired dark design (Chakra Petch
   + IBM Plex, live price ticker, signal-red accent); see [docs/DESIGN.md](docs/DESIGN.md)
 
@@ -47,69 +51,71 @@ Live at **https://amd.paisbru.com**.
 | Styling | [Tailwind CSS](https://tailwindcss.com) |
 | Charts | [Recharts](https://recharts.org) |
 | Database | PostgreSQL (shared `postgres` container, DB `amd_tracker`) via `pg` |
-| Scraping | [Axios](https://axios-http.com) + [Cheerio](https://cheerio.js.org), plus a separate **Playwright microservice** for JS-rendered / bot-protected sites |
-| State | [Zustand](https://zustand-demo.pmnd.rs) |
+| Auth | Hand-rolled: Node `crypto.scrypt` passwords, DB-backed sessions, hashed single-use tokens |
+| Email / chat | [Resend](https://resend.com) · Telegram Bot API |
+| Scraping | Axios + Cheerio, plus the separate **Playwright microservice** (`~/apps/playwright-scraper`) for JS-rendered / bot-protected sites |
+| Vision fallback | Claude (`claude-sonnet-5-5`) via `@anthropic-ai/sdk`, inside the Playwright service |
 
 ---
 
 ## Retailers
 
-Five retailers exist in the `retailers` table; only three produce data.
-
 | Retailer | Method | State |
 |---|---|---|
-| **Newegg.ca** | HTML scrape (Cheerio) | ✅ working — most reliable source |
-| **Amazon.ca** | Playwright microservice (stealth browser) | ✅ working |
-| **Canada Computers** | 2-step: JSON-LD on search → product page price | ⚠️ partial — resolves most GPUs, fails for nearly all CPUs |
-| **Best Buy Canada** | — | ❌ **stubbed**: returns `null` with `"Blocked by Akamai Bot Manager"`. Last real snapshot **2026-05-30** |
-| **Memory Express** | — | ❌ **stubbed**: returns `null` with `"Blocked by Cloudflare"`. Last real snapshot **2026-05-30** |
+| **Amazon.ca** | Playwright (stealth browser) | ✅ working |
+| **Canada Computers** | Plain HTTP: JSON-LD on search → product page price | ⚠️ partial — resolves most GPUs, fails for nearly all CPUs |
+| **Newegg.ca** | Playwright; listings hydrate after the `load` event | ✅ via browser (plain HTTP gets a CAPTCHA since 2026-09-10); paced 30s apart; still serves empty (throttled) pages for some products |
+| **Best Buy Canada** | Playwright; reads the product JSON the page fetches (`?search=` URL) | ⚠️ working again (stubbed since May); Akamai IP-bans after a burst, so requests are paced 45s apart |
+| **Memory Express** | Playwright | ❌ Cloudflare challenge from this IP — detected and reported as `blocked` |
 
-The two stubbed retailers are deliberately short-circuited in
-`src/lib/ca-scrapers.ts` — they are not broken selectors, the functions return a
-null price without making a request. Re-enabling them needs a residential proxy or
-a different approach, not a selector fix.
+The browser scrapers pick the **cheapest listing of exactly the queried model**
+(`matchesProduct` rejects look-alikes such as 9900X vs 9900X3D, RX 7600 vs 7600 XT,
+9060 XT 8GB vs 16GB), skipping refurbished/combo listings, priced within 0.4–2.5× MSRP,
+in-stock first.
 
-> ⚠️ The doc comment at the top of `src/lib/ca-scrapers.ts` still marks all four
-> scrapers "✅" — that comment is stale, this table is correct.
+The service paces requests per retailer (Best Buy 45s, Newegg 30s apart) and, once a
+retailer answers `blocked`, skips it for a cooldown (Best Buy 6h, Newegg/Amazon 30 min,
+Memory Express 12h) instead of extending the ban. `GET playwright-scraper:4000/health`
+lists retailers in cooldown. A full run takes roughly 15 minutes.
+
+### Screenshot / vision fallback
+
+When a browser page **loads** but no price can be parsed from its markup, the
+Playwright service takes a JPEG screenshot **in memory** (`page.screenshot()` returns
+a Buffer — nothing is written to disk), sends it once to Claude with a structured-output
+schema, and drops it. Only the extracted price is saved, as a normal snapshot with
+`price_snapshots.source = 'vision'`. A reading is accepted only if the title matches
+the model and the price is within 0.4–2.5× MSRP.
+
+- Bot-challenge pages (CAPTCHA / Cloudflare / Akamai) are detected first and skipped —
+  a screenshot of a challenge page has no price, so it costs nothing.
+- Only scheduled runs use it (`vision: true`); the public refresh button never does.
+- Budget: `VISION_MAX_CALLS_PER_12H` (default 60) rolling cap; `GET
+  playwright-scraper:4000/health` shows usage. ≈ US$0.005 per call.
 
 ---
 
 ## Data model
 
-PostgreSQL schema in [`db/schema.sql`](db/schema.sql):
+PostgreSQL schema in [`db/schema.sql`](db/schema.sql); migrations in `db/migrations/`.
 
-| Table | Purpose | Rows (2026-08-24) |
-|---|---|---|
-| `products` | tracked SKUs (slug PK, category, MSRP, specs JSONB) | 18 |
-| `retailers` | retailer name + base URL | 5 |
-| `price_snapshots` | every price check: product × retailer × time | 13,002 |
-| `gpu_variants` | AIB brand variants of a GPU | 45 |
-| `gpu_variant_snapshots` | price history per variant | — |
-| `alerts` | target price + email per product/variant | 0 |
+| Table | Purpose |
+|---|---|
+| `products` | tracked SKUs (slug PK, category, MSRP, specs JSONB) |
+| `retailers` | retailer name + base URL |
+| `price_snapshots` | every price check: product × retailer × time, plus `source` (`dom`/`vision`) and the page `url` |
+| `gpu_variants` / `gpu_variant_snapshots` | AIB brand variants of a GPU and their price history |
+| `users` | email (lowercased), scrypt hash, verification time, Telegram chat id, channel toggles |
+| `sessions` | SHA-256 of the session cookie → user, 30-day expiry |
+| `auth_tokens` | hashed single-use tokens: `verify_email` (24h), `reset_password` (1h), `telegram_link` (15m) |
+| `alerts` | user × product target price, `active`, `last_notified_at/price` |
+| `alert_notifications` | delivery log: one row per email/Telegram attempt, with the error if it failed |
 
 Seeding helpers live in `db/seed.mjs` and `db/add-2026-products.mjs`.
 
 ---
 
-## Tracked products (18)
-
-### CPUs (9)
-Ryzen 9 9950X3D · Ryzen 9 9950X · Ryzen 9 9900X3D · Ryzen 9 9900X ·
-Ryzen 7 9850X3D · Ryzen 7 9800X3D · Ryzen 7 9700X · Ryzen 7 7800X3D · Ryzen 5 9600X
-
-### GPUs (9)
-RX 9070 XT · RX 9070 · RX 9060 XT 16GB · RX 9060 XT 8GB · RX 7900 XTX ·
-RX 7900 XT · RX 7800 XT · RX 7600 XT 16GB · RX 7600 8GB
-
----
-
 ## Getting started
-
-### Prerequisites
-
-- [Node.js 18+](https://nodejs.org)
-- A PostgreSQL database (`DATABASE_URL`)
-- Optional: the Playwright scraper service for Amazon.ca (`PLAYWRIGHT_SCRAPER_URL`)
 
 ```bash
 npm install
@@ -118,115 +124,118 @@ node db/seed.mjs
 npm run dev            # http://localhost:3000
 ```
 
+Without `RESEND_API_KEY` the app logs verification/reset links to the console instead
+of emailing them.
+
 ### Environment
+
+App (`/home/server_pc/docker/amd-price-tracker.env`, plus `DATABASE_URL` and
+`PLAYWRIGHT_SCRAPER_URL` from the compose file):
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | `postgresql://user:pass@host:5432/amd_tracker` |
-| `PLAYWRIGHT_SCRAPER_URL` | defaults to `http://playwright-scraper:4000` |
+| `APP_URL` | public base URL used in email/Telegram links (`https://amd.paisbru.com`) |
+| `CRON_SECRET` | required in `x-cron-secret` by `/api/scrape-all` and `/api/cron/scrape` |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Resend; the sender domain must be verified in Resend |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` | bot from @BotFather |
+| `TELEGRAM_WEBHOOK_SECRET` | checked on every webhook call; register with `scripts/set-telegram-webhook.sh` |
+
+Playwright service (`/home/server_pc/docker/playwright-scraper.env`):
+
+| Variable | Purpose |
+|---|---|
+| `ANTHROPIC_API_KEY` | enables the vision fallback (off when empty) |
+| `VISION_ENABLED` | `false` to turn it off without removing the key |
+| `VISION_MODEL` | default `claude-sonnet-5-5` |
+| `VISION_MAX_CALLS_PER_12H` | rolling cap on vision calls (default 60) |
 
 ---
 
 ## API reference
 
-### `GET /api/prices`
-
-Returns product data from the DB, with the latest price per retailer and the full
-snapshot history.
-
-| Param | Description | Example |
-|-------|-------------|---------|
-| `id` | Single product by slug | `/api/prices?id=ryzen-9-9950x` |
-| `category` | Filter by `cpu` or `gpu` | `/api/prices?category=gpu` |
-
-### `GET /api/scrape`
-
-Scrapes live prices for one product on demand.
-
-| Param | Description |
-|-------|-------------|
-| `product` | Product name to search for |
-
-### `GET /api/scrape-all`
-
-Scrapes **every** product at **every** retailer and writes snapshots. This is what
-cron calls. Returns a per-product `{ saved: [], failed: [] }` summary.
-
-> Unauthenticated. If this app is ever exposed directly, gate it behind
-> `CRON_SECRET` as noted in the route's comment.
-
-### `POST /api/cron/scrape`
-
-Writes a single snapshot: `{ productId, retailerId, price, inStock }`.
-`POST /api/cron/scrape/variant` does the same for a GPU variant.
-
-### `GET | POST | DELETE /api/alerts`
-
-CRUD for price alerts, backed by the `alerts` table.
-
-> **Alerts do not notify.** There is no mailer in the codebase — no SendGrid,
-> Resend, nodemailer or SMTP. An alert is stored, joined against the latest price
-> and rendered on `/alerts`, but nothing sends email when the target is hit.
+| Route | Auth | Purpose |
+|---|---|---|
+| `GET /api/prices?id=…` / `?category=cpu\|gpu` | public | products with latest price per retailer and history |
+| `GET /api/scrape?productId=…` | public, 10-min cooldown per product | live scrape of one product (no vision) |
+| `GET /api/scrape-all` | `x-cron-secret` | scrape everything (vision on), then send due alerts |
+| `POST /api/cron/scrape` | `x-cron-secret` | write one snapshot `{ productId, retailerId, price, inStock }` |
+| `POST /api/auth/signup` · `login` · `logout` | — | `{ email, password }`; sets the `amd_session` cookie |
+| `GET /api/auth/me` | session | current user + active alert count |
+| `GET /api/auth/verify?token=` | link | email confirmation |
+| `POST /api/auth/resend-verification` | session | re-send the confirmation email |
+| `POST /api/auth/forgot` · `reset` | — | password reset (forgot always answers 200) |
+| `GET · POST · PATCH · DELETE /api/alerts` | session | the user's alerts; POST `{ productId, targetPrice }` upserts |
+| `PATCH /api/account` | session | `{ notifyEmail, notifyTelegram }` |
+| `POST · DELETE /api/account/telegram` | session | get a one-time `t.me` link / unlink |
+| `POST /api/telegram/webhook` | Telegram secret header | `/start <token>` links a chat, `/stop` unlinks |
 
 ---
 
 ## Scheduled scraping
 
-Host crontab:
-
 ```cron
-0 2,14 * * * /home/server_pc/scripts/scrape-prices.sh
+30 2,14 * * * /home/server_pc/scripts/scrape-prices.sh
 ```
 
-The script runs a throwaway `curlimages/curl` container on `server-net` and calls
-`http://amd-price-tracker:3000/api/scrape-all` with `--max-time 300`, logging to
-`/home/server_pc/backups/scrape.log`.
+The script reads `CRON_SECRET` from the env file, runs a throwaway `curlimages/curl`
+container on `server-net` against `http://amd-price-tracker:3000/api/scrape-all`
+(`--max-time 1800`), and logs `OK …` or `ERROR curl=<rc> HTTP <code> …` to
+`/home/server_pc/backups/scrape.log`. Each run's JSON summary includes per-product
+`saved` / `vision` / `failed` (with reasons such as `blocked`) and
+`alerts: { checked, notified, failed }`.
+
+---
+
+## Setup checklist (one-time)
+
+1. **Resend** — create an account, add the domain `paisbru.com`, add the DNS records
+   it shows (SPF/DKIM) in Cloudflare, create an API key → `RESEND_API_KEY`.
+2. **Telegram** — talk to @BotFather → `/newbot` → token → `TELEGRAM_BOT_TOKEN`, bot
+   username (without @) → `TELEGRAM_BOT_USERNAME`. Then run
+   `scripts/set-telegram-webhook.sh`.
+3. **Anthropic** — API key → `ANTHROPIC_API_KEY` in `playwright-scraper.env`.
+4. Redeploy both containers (below).
+
+## Deploy
+
+```bash
+docker compose -f /home/server_pc/docker/compose/playwright-scraper.yml up -d --build
+docker compose -f /home/server_pc/docker/compose/amd-price-tracker.yml up -d --build
+```
+
+Apply new migrations first:
+`docker exec -i postgres psql -U admin -d amd_tracker < db/migrations/<file>.sql`.
+
+Container has no host port; cloudflared routes `amd.paisbru.com → amd-price-tracker:3000`.
 
 ---
 
 ## Known issues
 
-**1. The 02:00 scrape fails silently.** It failed on 5 of the last 7 nights
-(Aug 18, 19, 20, 21, 24) while the 14:00 run succeeded every time. Two causes
-compound:
-
-- `0 2 * * *` also runs `backup.sh`, so the scrape competes with `pg_dumpall` and
-  exceeds the 300s curl timeout.
-- `scrape-prices.sh` sets `set -euo pipefail`. When `docker run` exits non-zero on
-  timeout, the script dies *before* reaching its logging branch — so the log shows
-  `Iniciando scraping…` with no `OK` and no `ERROR` line. Failures are invisible.
-
-Fix: stagger the schedules, and capture the curl exit code instead of letting
-`set -e` abort (`result=$(... ) || rc=$?`).
-
-**2. Two of five retailers return nothing** — see [Retailers](#retailers).
-
-**3. Canada Computers misses all CPUs.** The JSON-LD search-result URL pattern
-matches GPU product pages but not CPU ones.
-
----
-
-## Deploy
-
-```bash
-docker compose -f /home/server_pc/docker/compose/amd-price-tracker.yml up -d --build
-```
-
-Container has no host port; cloudflared routes `amd.paisbru.com → amd-price-tracker:3000`.
-Limits: 512 MB / 1.0 CPU. `DATABASE_URL` and `PLAYWRIGHT_SCRAPER_URL` are injected
-by the compose file.
+1. **Rate limiting on Newegg and Best Buy** — a burst of requests from this IP gets an
+   Akamai 403 (Best Buy) or empty result pages (Newegg). Pacing + cooldowns keep
+   scheduled runs under the limit; whether 45s is slow enough for Best Buy is still
+   being confirmed against real runs (check `failed` in `scrape.log`).
+2. **Memory Express** — Cloudflare challenge; needs a residential proxy, not code.
+3. **Canada Computers misses all CPUs** — the JSON-LD search-result URL pattern
+   matches GPU product pages but not CPU ones.
+4. **Amazon.ca and Canada Computers take the first search hit**, so some snapshots are
+   for the wrong card (e.g. a C$2,191 RX 9070 listing). They should use the same
+   `matchesProduct` / cheapest-listing logic as the browser scrapers.
 
 ---
 
 ## Roadmap
 
-- [ ] Fix the silent 02:00 scrape failure (stagger cron, handle curl exit code)
-- [ ] Actually deliver alert notifications (email or Telegram)
-- [ ] Restore Best Buy CA + Memory Express, or drop them from the retailers table
+- [x] Fix the silent 02:00 scrape failure
+- [x] Deliver alert notifications (email + Telegram)
+- [x] User accounts and per-user alerts
+- [x] Protect `/api/scrape-all` with `CRON_SECRET`
+- [x] Restore Best Buy CA
+- [ ] Exact-model matching for Amazon.ca and Canada Computers
 - [ ] Fix Canada Computers CPU product-URL matching
-- [ ] Protect `/api/scrape-all` with `CRON_SECRET`
+- [ ] Memory Express (residential proxy) or drop it
 - [ ] Price-drop percentage filters and sorting
-- [ ] User accounts and saved alert history
 
 ---
 

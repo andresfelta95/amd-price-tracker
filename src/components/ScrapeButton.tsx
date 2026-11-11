@@ -29,7 +29,9 @@ export default function ScrapeButton({ productId, productName }: ScrapeButtonPro
     try {
       const res = await fetch(`/api/scrape?productId=${encodeURIComponent(productId)}`);
       const data = await res.json();
-      if (data.error) {
+      if (res.status === 429) {
+        setError("Prices were refreshed a few minutes ago — try again later.");
+      } else if (data.error) {
         setError(data.error);
       } else {
         setResults({ saved: data.saved, failed: data.failed, prices: data.results });
@@ -87,7 +89,7 @@ export default function ScrapeButton({ productId, productName }: ScrapeButtonPro
             >
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-ink">{r.retailer}</span>
-                <span className={`rounded-sm px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider ${r.source === "api" ? "bg-signal-soft text-signal-text" : "bg-panel text-ink-dim"}`}>
+                <span className={`rounded-sm px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider ${r.source === "vision" ? "bg-signal-soft text-signal-text" : "bg-panel text-ink-dim"}`}>
                   {r.source}
                 </span>
               </div>
@@ -118,7 +120,7 @@ export default function ScrapeButton({ productId, productName }: ScrapeButtonPro
 
       {!results && !error && !loading && (
         <p className="font-mono text-xs leading-relaxed text-ink-faint">
-          Covers Best Buy CA (API), Newegg.ca, Memory Express, Canada Computers.
+          Covers Newegg.ca, Best Buy CA, Memory Express, Canada Computers and Amazon.ca.
           Results are saved to the database and charts update automatically.
         </p>
       )}

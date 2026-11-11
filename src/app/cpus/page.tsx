@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import ProductCard from "@/components/ProductCard";
 import pool from "@/lib/db";
+import { lowestRecentPrice } from "@/lib/prices";
 import { Product } from "@/lib/types";
 
 export const metadata = {
@@ -27,8 +28,7 @@ async function getCpus(): Promise<Product[]> {
           name: r.name, url: r.url, price: r.price,
           inStock: r.in_stock, lastChecked: String(r.recorded_at),
         }));
-        const prices = retailers.map((r) => r.price);
-        const currentLowest = prices.length ? Math.min(...prices) : null;
+        const currentLowest = lowestRecentPrice(rRes.rows);
         return { ...p, specs: p.specs, currentLowest, retailers, priceHistory: [] };
       })
     );

@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import pool from "@/lib/db";
+import { lowestRecentPrice } from "@/lib/prices";
 import { Product } from "@/lib/types";
 
 async function getHomeData() {
@@ -14,13 +15,12 @@ async function getHomeData() {
     const products: Product[] = await Promise.all(
       pRes.rows.map(async (p) => {
         const rRes = await client.query(
-          `SELECT DISTINCT ON (r.id) ps.price::float
+          `SELECT DISTINCT ON (r.id) ps.price::float, ps.recorded_at
            FROM price_snapshots ps JOIN retailers r ON r.id=ps.retailer_id
            WHERE ps.product_id=$1 ORDER BY r.id, ps.recorded_at DESC`,
           [p.id]
         );
-        const prices = rRes.rows.map((r) => r.price);
-        const currentLowest = prices.length ? Math.min(...prices) : null;
+        const currentLowest = lowestRecentPrice(rRes.rows);
         return { ...p, specs: p.specs, currentLowest, retailers: [], priceHistory: [] };
       })
     );

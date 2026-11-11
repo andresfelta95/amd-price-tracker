@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import pool from "@/lib/db";
+import { lowestRecentPrice } from "@/lib/prices";
 import { Product, Retailer, PricePoint, GpuVariant } from "@/lib/types";
 import PriceChart from "@/components/PriceChart";
 import RetailerTable from "@/components/RetailerTable";
@@ -58,7 +59,7 @@ async function getProduct(id: string): Promise<Product | null> {
     }));
 
     const currentLowest =
-      retailers.length > 0 ? Math.min(...retailers.map((r) => r.price)) : null;
+      lowestRecentPrice(rRes.rows);
 
     let variants: GpuVariant[] | undefined;
     if (p.category === "gpu") {
