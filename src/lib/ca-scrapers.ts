@@ -1,15 +1,16 @@
 /**
- * Canadian retailer price fetching.
+ * Canadian retailer price fetching — every retailer goes through the Playwright
+ * microservice (~/apps/playwright-scraper), which owns product matching:
  *
- * - Canada Computers: plain HTTP — JSON-LD on search → product page price
- * - Newegg.ca, Best Buy Canada, Memory Express, Amazon.ca: Playwright microservice
- *   (real stealth browser). When a page loads but no price can be parsed from the
- *   markup, the service can fall back to reading a screenshot with Claude
- *   (`source: "vision"`). Bot-challenge pages come back as `error: "blocked"`.
+ * - Canada Computers: plain HTTP search page, cheapest exact match across tiles
+ * - Newegg.ca, Best Buy Canada, Memory Express, Amazon.ca: real browser. When a
+ *   page loads but no price can be parsed from the markup, the service can fall
+ *   back to reading a screenshot with Claude (`source: "vision"`). Bot-challenge
+ *   and throttled pages come back as `error: "blocked"` and the retailer cools down.
  */
 
 import axios from "axios";
-import * as cheerio from "cheerio";
+import type { MatchTokens } from "@/lib/types";
 
 const PLAYWRIGHT_URL = process.env.PLAYWRIGHT_SCRAPER_URL ?? "http://playwright-scraper:4000";
 
@@ -23,97 +24,19 @@ export interface CaPrice {
 }
 
 export interface FetchOptions {
-  /** Used by the vision fallback to reject implausible readings */
+  /** Used to reject implausible prices (0.4–2.5× MSRP) */
   msrp?: number;
   /** Allow the screenshot/vision fallback (scheduled runs only — it costs API credits) */
   vision?: boolean;
+  /** Exact-token rule; without it the service uses its CPU/GPU name matching */
+  match?: MatchTokens | null;
 }
 
-const CA_HEADERS = {
-  "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-  "Accept-Language": "en-CA,en;q=0.9",
-  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-  "Cache-Control": "no-cache",
-  Pragma: "no-cache",
-};
-
-// ── Canada Computers ──────────────────────────────────────────────────────────
-// Uses ?s= (PrestaShop server-side search) + product page itemprop price.
-export async function scrapeCanadaComputers(query: string): Promise<CaPrice> {
-  const searchUrl = `https://www.canadacomputers.com/en/search?s=${encodeURIComponent(query)}`;
-  try {
-    // Step 1: search page — parse JSON-LD to find the first product URL
-    const { data: searchHtml } = await axios.get(searchUrl, { headers: CA_HEADERS, timeout: 20000 });
-    const $s = cheerio.load(searchHtml);
-
-    let productUrl: string | null = null;
-    $s('script[type="application/ld+json"]').each((_, el) => {
-      if (productUrl) return;
-      try {
-        const json = JSON.parse($s(el).html() ?? "");
-        const items: Array<{ url?: string; item?: { url?: string } }> =
-          json?.itemListElement ?? (Array.isArray(json) ? json : [json]);
-        for (const item of items) {
-          const u = item?.url ?? item?.item?.url;
-          // Must be a product page URL (has category + product-slug segments)
-          if (u && /canadacomputers\.com\/en\/[^/]+\/\d+\//.test(u)) {
-            productUrl = u;
-            break;
-          }
-        }
-      } catch (_) {}
-    });
-
-    if (!productUrl) {
-      return { retailer: "Canada Computers", price: null, inStock: false, url: searchUrl, source: "scrape", error: "No product URL in search results" };
-    }
-
-    // Step 2: product page — extract price
-    const { data: prodHtml } = await axios.get(productUrl, { headers: CA_HEADERS, timeout: 20000 });
-    const $p = cheerio.load(prodHtml);
-
-    // Try JSON-LD price first
-    let price: number | null = null;
-    $p('script[type="application/ld+json"]').each((_, el) => {
-      if (price) return;
-      try {
-        const json = JSON.parse($p(el).html() ?? "");
-        const candidate = typeof json?.offers?.price === "number" ? json.offers.price
-          : typeof json?.price === "number" ? json.price : null;
-        if (candidate && candidate > 0) price = candidate;
-      } catch (_) {}
-    });
-
-    // Fallback: itemprop="price"
-    if (!price) {
-      const raw = $p('[itemprop="price"]').first().text().replace(/[^0-9.]/g, "");
-      const parsed = parseFloat(raw);
-      if (parsed > 0) price = parsed;
-    }
-
-    const outOfStock = $p('[class*="OutOfStock"], .product-unavailable, [data-availability="out"]').length > 0;
-    return { retailer: "Canada Computers", price, inStock: !outOfStock && price !== null, url: productUrl, source: "scrape" };
-  } catch (err) {
-    return {
-      retailer: "Canada Computers",
-      price: null,
-      inStock: false,
-      url: searchUrl,
-      source: "scrape",
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
-}
-
-// ── Playwright microservice ──────────────────────────────────────────────────
-// Sites that block plain HTTP (CAPTCHA, Akamai, Cloudflare, JS-rendered) go
-// through a real browser. Errors degrade to a null price.
-async function viaPlaywright(retailer: string, query: string, fallbackUrl: string, opts: FetchOptions): Promise<CaPrice> {
+async function viaScraper(retailer: string, query: string, fallbackUrl: string, opts: FetchOptions): Promise<CaPrice> {
   try {
     const { data } = await axios.post(
       `${PLAYWRIGHT_URL}/scrape`,
-      { retailer, query, msrp: opts.msrp, vision: !!opts.vision },
+      { retailer, query, msrp: opts.msrp, vision: !!opts.vision, match: opts.match ?? undefined },
       { timeout: 150000 }, // includes waiting in the per-retailer pacing queue
     );
     return {
@@ -136,42 +59,17 @@ async function viaPlaywright(retailer: string, query: string, fallbackUrl: strin
   }
 }
 
-export function scrapeNeweggCA(query: string, opts: FetchOptions = {}) {
-  return viaPlaywright("Newegg.ca", query, `https://www.newegg.ca/p/pl?d=${encodeURIComponent(query)}&N=4131`, opts);
-}
-
-export function fetchBestBuyCA(query: string, opts: FetchOptions = {}) {
-  return viaPlaywright("Best Buy Canada", query, `https://www.bestbuy.ca/en-ca/search?query=${encodeURIComponent(query)}`, opts);
-}
-
-export function scrapeMemoryExpress(query: string, opts: FetchOptions = {}) {
-  return viaPlaywright("Memory Express", query, `https://www.memoryexpress.com/Search/Products?Search=${encodeURIComponent(query)}`, opts);
-}
-
-export function scrapeAmazonCA(query: string, opts: FetchOptions = {}) {
-  return viaPlaywright("Amazon.ca", query, `https://www.amazon.ca/s?k=${encodeURIComponent(query)}`, opts);
-}
+const q = encodeURIComponent;
+const RETAILERS: Array<{ name: string; url: (query: string) => string }> = [
+  { name: "Best Buy Canada", url: (s) => `https://www.bestbuy.ca/en-ca/search?search=${q(s)}` },
+  { name: "Newegg.ca", url: (s) => `https://www.newegg.ca/p/pl?d=${q(s)}&N=4131` },
+  { name: "Memory Express", url: (s) => `https://www.memoryexpress.com/Search/Products?Search=${q(s)}` },
+  { name: "Canada Computers", url: (s) => `https://www.canadacomputers.com/en/search?s=${q(s)}` },
+  { name: "Amazon.ca", url: (s) => `https://www.amazon.ca/s?k=${q(s)}` },
+];
 
 // ── Aggregate ─────────────────────────────────────────────────────────────────
 export async function fetchAllCAPrices(productName: string, opts: FetchOptions = {}): Promise<CaPrice[]> {
-  const results = await Promise.allSettled([
-    fetchBestBuyCA(productName, opts),
-    scrapeNeweggCA(productName, opts),
-    scrapeMemoryExpress(productName, opts),
-    scrapeCanadaComputers(productName),
-    scrapeAmazonCA(productName, opts),
-  ]);
-
-  const fallbacks = ["Best Buy Canada", "Newegg.ca", "Memory Express", "Canada Computers", "Amazon.ca"];
-  return results.map((r, i) => {
-    if (r.status === "fulfilled") return r.value;
-    return {
-      retailer: fallbacks[i],
-      price: null,
-      inStock: false,
-      url: "",
-      source: "scrape" as const,
-      error: "Request failed",
-    };
-  });
+  // viaScraper never throws, so every retailer yields a row
+  return Promise.all(RETAILERS.map((r) => viaScraper(r.name, productName, r.url(productName), opts)));
 }

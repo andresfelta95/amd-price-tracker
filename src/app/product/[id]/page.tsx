@@ -10,6 +10,8 @@ import RetailerTable from "@/components/RetailerTable";
 import AlertForm from "@/components/AlertForm";
 import ScrapeButton from "@/components/ScrapeButton";
 import GpuVariantsPanel from "@/components/GpuVariantsPanel";
+import CompatibleParts from "@/components/CompatibleParts";
+import { CATEGORY_META, isPlaceholderImage } from "@/lib/catalog";
 
 interface ProductPageProps {
   params: { id: string };
@@ -19,7 +21,7 @@ async function getProduct(id: string): Promise<Product | null> {
   const client = await pool.connect();
   try {
     const pRes = await client.query(
-      `SELECT id, name, category, image, specs, msrp::float, release_date FROM products WHERE id=$1`,
+      `SELECT id, name, category, image, specs, msrp::float, release_date, socket, chipset FROM products WHERE id=$1`,
       [id]
     );
     if (!pRes.rows.length) return null;
@@ -27,7 +29,7 @@ async function getProduct(id: string): Promise<Product | null> {
 
     const rRes = await client.query(
       `SELECT DISTINCT ON (r.id)
-         r.id, r.name, r.url, ps.price::float, ps.in_stock, ps.recorded_at
+         r.id, r.name, COALESCE(ps.url, r.url) AS url, ps.price::float, ps.in_stock, ps.recorded_at, ps.source
        FROM price_snapshots ps
        JOIN retailers r ON r.id = ps.retailer_id
        WHERE ps.product_id = $1
@@ -43,6 +45,7 @@ async function getProduct(id: string): Promise<Product | null> {
       currency: "CAD",
       inStock: r.in_stock,
       lastChecked: r.recorded_at.toISOString(),
+      source: r.source,
     }));
 
     const histRes = await client.query(
@@ -112,6 +115,8 @@ async function getProduct(id: string): Promise<Product | null> {
       specs: p.specs,
       msrp: p.msrp,
       releaseDate: p.release_date?.toISOString().split("T")[0],
+      socket: p.socket,
+      chipset: p.chipset,
       currentLowest,
       retailers,
       priceHistory,
@@ -141,6 +146,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     product.currentLowest !== null
       ? Math.round(((product.msrp - product.currentLowest) / product.msrp) * 100)
       : 0;
+  const meta = CATEGORY_META[product.category];
+  const listHref = product.socket ? `${meta.path}?socket=${product.socket.toLowerCase()}` : meta.path;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -148,11 +155,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <nav className="mb-8 flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-ink-faint">
         <Link href="/" className="transition-colors hover:text-ink">Home</Link>
         <span className="text-signal-text">/</span>
-        <Link
-          href={product.category === "cpu" ? "/cpus" : "/gpus"}
-          className="transition-colors hover:text-ink"
-        >
-          {product.category === "cpu" ? "CPUs" : "GPUs"}
+        <Link href={listHref} className="transition-colors hover:text-ink">
+          {meta.label}
+          {product.socket ? ` · ${product.socket}` : ""}
         </Link>
         <span className="text-signal-text">/</span>
         <span className="text-ink-dim">{product.name}</span>
@@ -163,7 +168,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="lg:col-span-2">
           <div className="flex flex-col gap-6 sm:flex-row">
             <div className="corner-frame flex h-48 w-full shrink-0 items-center justify-center overflow-hidden rounded border border-line bg-panel sm:w-48">
-              {product.image && product.image !== '/cpu-placeholder.svg' && product.image !== '/gpu-placeholder.svg' ? (
+              {!isPlaceholderImage(product.image) ? (
                 <img
                   src={product.image}
                   alt={product.name}
@@ -171,7 +176,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 />
               ) : (
                 <span className="font-mono text-sm uppercase tracking-widest text-ink-faint">
-                  {product.category === "cpu" ? "[ CPU ]" : "[ GPU ]"}
+                  {meta.placeholder}
                 </span>
               )}
             </div>
@@ -184,8 +189,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
                       : "bg-raised text-ink-dim ring-1 ring-inset ring-line-strong"
                   }`}
                 >
-                  {product.category}
+                  {product.category === "motherboard" ? "board" : product.category}
                 </span>
+                {product.socket && (
+                  <span className="rounded-sm px-1.5 py-0.5 text-ink-dim ring-1 ring-inset ring-line">
+                    {product.socket}
+                    {product.chipset ? ` · ${product.chipset}` : ""}
+                  </span>
+                )}
                 {discount > 0 && (
                   <span className="rounded-sm bg-gain-soft px-1.5 py-0.5 text-gain">
                     ▼{discount}% below MSRP
@@ -243,6 +254,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
         />
         <RetailerTable retailers={product.retailers} />
       </div>
+
+      {/* Same-socket CPUs / boards */}
+      <CompatibleParts product={product} />
 
       {/* GPU variants */}
       {product.variants && product.variants.length > 0 && (

@@ -3,13 +3,19 @@
 CREATE TABLE IF NOT EXISTS products (
   id            TEXT PRIMARY KEY,           -- slug, e.g. "ryzen-9-9950x"
   name          TEXT NOT NULL,
-  category      TEXT NOT NULL CHECK (category IN ('cpu', 'gpu')),
+  category      TEXT NOT NULL CONSTRAINT products_category_check CHECK (category IN ('cpu', 'gpu', 'motherboard')),
   image         TEXT NOT NULL DEFAULT '/cpu-placeholder.svg',
   specs         JSONB NOT NULL DEFAULT '{}',
-  msrp          NUMERIC(10,2) NOT NULL,
+  msrp          NUMERIC(10,2) NOT NULL,              -- CAD list price when added
   release_date  DATE,
+  socket        TEXT CONSTRAINT products_socket_check CHECK (socket IS NULL OR socket IN ('AM4', 'AM5')),  -- CPUs + boards
+  chipset       TEXT,                                -- boards: B850, X870E, B550, ...
+  match_tokens  JSONB,                               -- {"require":[...],"forbid":[...]} exact-match rule for the scraper
+  discontinued  BOOLEAN NOT NULL DEFAULT FALSE,      -- hidden from listings, history kept
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_products_category_socket ON products (category, socket);
 
 CREATE TABLE IF NOT EXISTS retailers (
   id    SERIAL PRIMARY KEY,

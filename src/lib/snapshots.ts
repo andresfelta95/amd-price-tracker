@@ -1,5 +1,16 @@
 import type { PoolClient } from "pg";
 import { fetchAllCAPrices, type CaPrice, type FetchOptions } from "@/lib/ca-scrapers";
+import type { MatchTokens } from "@/lib/types";
+
+/** Columns scrapeAndSave needs; select these wherever products are scraped. */
+export const SCRAPE_COLUMNS = `id, name, msrp::float, match_tokens`;
+
+export interface ScrapeTarget {
+  id: string;
+  name: string;
+  msrp: number;
+  match_tokens?: MatchTokens | null;
+}
 
 export interface ProductScrapeResult {
   productId: string;
@@ -18,11 +29,11 @@ export async function getRetailerMap(db: PoolClient): Promise<Record<string, num
 /** Scrapes every retailer for one product and writes a snapshot for each price found. */
 export async function scrapeAndSave(
   db: PoolClient,
-  product: { id: string; name: string; msrp: number },
+  product: ScrapeTarget,
   retailerMap: Record<string, number>,
   opts: FetchOptions
 ): Promise<{ summary: ProductScrapeResult; prices: CaPrice[] }> {
-  const prices = await fetchAllCAPrices(product.name, { ...opts, msrp: product.msrp });
+  const prices = await fetchAllCAPrices(product.name, { ...opts, msrp: product.msrp, match: product.match_tokens });
   const result: ProductScrapeResult = { productId: product.id, saved: [], vision: [], failed: [] };
 
   for (const p of prices) {

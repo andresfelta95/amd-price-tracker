@@ -14,6 +14,7 @@ export default function Navbar() {
     { href: "/", label: "Home" },
     { href: "/cpus", label: "CPUs" },
     { href: "/gpus", label: "GPUs" },
+    { href: "/motherboards", label: "Boards" },
     { href: "/alerts", label: "Alerts" },
   ];
 

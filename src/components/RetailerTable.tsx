@@ -43,6 +43,14 @@ export default function RetailerTable({ retailers }: RetailerTableProps) {
                   <span className={`font-mono text-lg font-semibold ${idx === 0 ? "text-gain" : "text-ink"}`}>
                     C${retailer.price.toFixed(2)}
                   </span>
+                  {retailer.source === "vision" && (
+                    <span
+                      title="Read from a screenshot of the retailer's page"
+                      className="ml-2 rounded-sm px-1 py-0.5 align-middle font-mono text-[10px] uppercase tracking-wider text-ink-faint ring-1 ring-inset ring-line"
+                    >
+                      vision
+                    </span>
+                  )}
                 </td>
                 <td className="py-3">
                   {retailer.inStock ? (

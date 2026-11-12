@@ -3,13 +3,13 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { lowestRecentPrice } from "@/lib/prices";
-import { Product, Retailer, PricePoint, GpuVariant } from "@/lib/types";
+import { Product, Retailer, PricePoint, GpuVariant, parseSocket, type ProductCategory, type Socket } from "@/lib/types";
 
 async function fetchProduct(id: string): Promise<Product | null> {
   const client = await pool.connect();
   try {
     const pRes = await client.query(
-      `SELECT id, name, category, image, specs, msrp::float, release_date FROM products WHERE id=$1`,
+      `SELECT id, name, category, image, specs, msrp::float, release_date, socket, chipset FROM products WHERE id=$1`,
       [id]
     );
     if (!pRes.rows.length) return null;
@@ -106,6 +106,8 @@ async function fetchProduct(id: string): Promise<Product | null> {
       specs: p.specs,
       msrp: p.msrp,
       releaseDate: p.release_date?.toISOString().split("T")[0],
+      socket: p.socket,
+      chipset: p.chipset,
       currentLowest,
       retailers,
       priceHistory,
@@ -116,12 +118,13 @@ async function fetchProduct(id: string): Promise<Product | null> {
   }
 }
 
-async function fetchByCategory(category: "cpu" | "gpu"): Promise<Product[]> {
+async function fetchByCategory(category: ProductCategory, socket: Socket | null): Promise<Product[]> {
   const client = await pool.connect();
   try {
     const pRes = await client.query(
-      `SELECT id FROM products WHERE category=$1 ORDER BY msrp DESC`,
-      [category]
+      `SELECT id FROM products WHERE category=$1 AND ($2::text IS NULL OR socket=$2) AND NOT discontinued
+       ORDER BY msrp DESC`,
+      [category, socket]
     );
     const products = await Promise.all(
       pRes.rows.map((r) => fetchProduct(r.id))
@@ -136,7 +139,7 @@ async function fetchAll(): Promise<Product[]> {
   const client = await pool.connect();
   try {
     const pRes = await client.query(
-      `SELECT id FROM products ORDER BY category, msrp DESC`
+      `SELECT id FROM products WHERE NOT discontinued ORDER BY category, msrp DESC`
     );
     const products = await Promise.all(
       pRes.rows.map((r) => fetchProduct(r.id))
@@ -161,8 +164,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(product);
     }
 
-    if (category === "cpu" || category === "gpu") {
-      return NextResponse.json(await fetchByCategory(category));
+    if (category === "cpu" || category === "gpu" || category === "motherboard") {
+      return NextResponse.json(await fetchByCategory(category, parseSocket(searchParams.get("socket"))));
     }
 
     return NextResponse.json(await fetchAll());
