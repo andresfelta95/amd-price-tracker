@@ -10,7 +10,8 @@ async function getHomeData() {
   const client = await pool.connect();
   try {
     const pRes = await client.query(
-      `SELECT id, name, category, image, specs, msrp::float FROM products ORDER BY category, msrp DESC`
+      `SELECT id, name, category, image, specs, msrp::float, socket, chipset FROM products
+       WHERE NOT discontinued ORDER BY category, msrp DESC`
     );
     const products: Product[] = await Promise.all(
       pRes.rows.map(async (p) => {
@@ -102,6 +103,12 @@ export default async function Home() {
 
   const cpus = products.filter((p) => p.category === "cpu");
   const gpus = products.filter((p) => p.category === "gpu");
+  const boards = products.filter((p) => p.category === "motherboard");
+  // Previews: cheapest priced first so the section shows live numbers
+  const preview = (list: Product[], n: number) =>
+    [...list].sort((a, b) => (a.currentLowest ?? Infinity) - (b.currentLowest ?? Infinity)).slice(0, n);
+  const am5Cpus = cpus.filter((p) => p.socket === "AM5");
+  const am4Cpus = cpus.filter((p) => p.socket === "AM4");
 
   const bestDeals = [...products]
     .sort((a, b) => {
@@ -113,9 +120,9 @@ export default async function Home() {
 
   const stats = [
     { value: String(products.length).padStart(2, "0"), label: "Products" },
+    { value: String(boards.length).padStart(2, "0"), label: "Motherboards" },
     { value: String(variantCount).padStart(2, "0"), label: "GPU variants" },
     { value: String(retailerCount).padStart(2, "0"), label: "CA retailers" },
-    { value: "24/7", label: "Monitoring" },
   ];
 
   return (
@@ -175,25 +182,48 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* CPUs Preview */}
+      {/* CPUs Preview — one row per platform */}
       <section className="mx-auto max-w-7xl px-4 py-12">
-        <SectionHeader index="02 · RYZEN" title="Processors" href="/cpus" />
+        <SectionHeader index="02 · RYZEN AM5" title="AM5 processors" href="/cpus?socket=am5" />
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {cpus.slice(0, 3).map((product) => (
+          {preview(am5Cpus, 3).map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
       </section>
 
+      {am4Cpus.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 pb-12">
+          <SectionHeader index="03 · RYZEN AM4" title="AM4 processors" href="/cpus?socket=am4" />
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {preview(am4Cpus, 3).map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* GPUs Preview */}
-      <section className="mx-auto max-w-7xl px-4 pb-8">
-        <SectionHeader index="03 · RADEON" title="Graphics cards" href="/gpus" />
+      <section className="mx-auto max-w-7xl px-4 pb-12">
+        <SectionHeader index="04 · RADEON" title="Graphics cards" href="/gpus" />
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {gpus.slice(0, 3).map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
       </section>
+
+      {/* Boards Preview */}
+      {boards.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 pb-8">
+          <SectionHeader index="05 · AM5 / AM4" title="Motherboards" href="/motherboards" />
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {preview(boards, 3).map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="16" fill="#1a1a2e"/>
+  <rect x="35" y="30" width="130" height="140" rx="6" stroke="#ED1C24" stroke-width="3" fill="#16213e"/>
+  <!-- socket -->
+  <rect x="55" y="50" width="44" height="44" rx="3" fill="#ED1C24" opacity="0.2" stroke="#ED1C24" stroke-width="2"/>
+  <!-- DIMM slots -->
+  <rect x="112" y="46" width="6" height="56" fill="#666"/>
+  <rect x="124" y="46" width="6" height="56" fill="#666"/>
+  <rect x="136" y="46" width="6" height="56" fill="#666"/>
+  <!-- PCIe slots -->
+  <rect x="50" y="118" width="100" height="7" fill="#666"/>
+  <rect x="50" y="140" width="100" height="7" fill="#666"/>
+  <text x="77" y="78" text-anchor="middle" fill="#ED1C24" font-size="12" font-family="Arial" font-weight="bold">AM5</text>
+</svg>

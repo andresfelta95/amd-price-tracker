@@ -14,7 +14,7 @@ async function getGpus(): Promise<Product[]> {
   const client = await pool.connect();
   try {
     const pRes = await client.query(
-      `SELECT id, name, category, image, specs, msrp::float FROM products WHERE category='gpu' ORDER BY msrp DESC`
+      `SELECT id, name, category, image, specs, msrp::float FROM products WHERE category='gpu' AND NOT discontinued ORDER BY msrp DESC`
     );
     return Promise.all(
       pRes.rows.map(async (p) => {

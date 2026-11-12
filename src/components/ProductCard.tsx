@@ -1,8 +1,15 @@
 import Link from "next/link";
+import { CATEGORY_META, isPlaceholderImage } from "@/lib/catalog";
 import { Product } from "@/lib/types";
 
 interface ProductCardProps {
   product: Product;
+}
+
+function specLine(p: Product): string {
+  if (p.category === "cpu") return `${p.specs.Cores}C / ${p.specs["Boost Clock"]}`;
+  if (p.category === "motherboard") return `${p.specs["Form Factor"] ?? ""} · DDR${p.socket === "AM4" ? "4" : "5"}`;
+  return `${p.specs.VRAM} / ${p.specs["Boost Clock"]}`;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
@@ -19,7 +26,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       className="corner-frame group block rounded border border-line bg-panel p-5 transition-all duration-200 hover:-translate-y-1 hover:border-line-strong hover:bg-raised"
     >
       <div className="mb-4 flex h-40 w-full items-center justify-center overflow-hidden rounded bg-raised">
-        {product.image && product.image !== '/cpu-placeholder.svg' && product.image !== '/gpu-placeholder.svg' ? (
+        {!isPlaceholderImage(product.image) ? (
           <img
             src={product.image}
             alt={product.name}
@@ -27,7 +34,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           />
         ) : (
           <div className="font-mono text-xs uppercase tracking-widest text-ink-faint">
-            {product.category === "cpu" ? "[ CPU ]" : "[ GPU ]"}
+            {CATEGORY_META[product.category].placeholder}
           </div>
         )}
       </div>
@@ -41,8 +48,14 @@ export default function ProductCard({ product }: ProductCardProps) {
               : "bg-raised text-ink-dim ring-1 ring-inset ring-line-strong"
           }`}
         >
-          {product.category}
+          {product.category === "motherboard" ? "board" : product.category}
         </span>
+        {product.socket && (
+          <span className="rounded-sm px-1.5 py-0.5 text-ink-dim ring-1 ring-inset ring-line">
+            {product.socket}
+            {product.chipset ? ` · ${product.chipset}` : ""}
+          </span>
+        )}
         {hasDiscount && (
           <span className="rounded-sm bg-gain-soft px-1.5 py-0.5 text-gain">▼{discount}%</span>
         )}
@@ -55,9 +68,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* Key specs */}
       <p className="mb-4 font-mono text-xs text-ink-dim">
-        {product.category === "cpu"
-          ? `${product.specs.Cores}C / ${product.specs["Boost Clock"]}`
-          : `${product.specs.VRAM} / ${product.specs["Boost Clock"]}`}
+        {specLine(product)}
       </p>
 
       {/* Readout */}

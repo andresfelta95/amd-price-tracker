@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 
 import pool from "@/lib/db";
-import { getRetailerMap, scrapeAndSave } from "@/lib/snapshots";
+import { getRetailerMap, scrapeAndSave, SCRAPE_COLUMNS } from "@/lib/snapshots";
 
 // Public endpoint (product page refresh button): rate-limited per product,
 // and never uses the paid screenshot/vision fallback.
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   const client = await pool.connect();
   try {
     const pRes = await client.query(
-      `SELECT id, name, msrp::float,
+      `SELECT ${SCRAPE_COLUMNS},
               (SELECT MAX(recorded_at) FROM price_snapshots WHERE product_id = products.id) AS last_scraped
        FROM products WHERE id = $1`,
       [productId]
