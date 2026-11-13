@@ -54,6 +54,8 @@ export interface Product {
   releaseDate?: string;
   socket?: Socket | null;
   chipset?: string | null;
+  /** No longer sold; hidden from lists and scrapes, page and history kept. */
+  discontinued?: boolean;
   currentLowest: number | null;
   retailers: Retailer[];
   priceHistory: PricePoint[];
