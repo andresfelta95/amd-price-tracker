@@ -21,7 +21,7 @@ async function getProduct(id: string): Promise<Product | null> {
   const client = await pool.connect();
   try {
     const pRes = await client.query(
-      `SELECT id, name, category, image, specs, msrp::float, release_date, socket, chipset FROM products WHERE id=$1`,
+      `SELECT id, name, category, image, specs, msrp::float, release_date, socket, chipset, discontinued FROM products WHERE id=$1`,
       [id]
     );
     if (!pRes.rows.length) return null;
@@ -117,6 +117,7 @@ async function getProduct(id: string): Promise<Product | null> {
       releaseDate: p.release_date?.toISOString().split("T")[0],
       socket: p.socket,
       chipset: p.chipset,
+      discontinued: p.discontinued === true,
       currentLowest,
       retailers,
       priceHistory,
@@ -195,6 +196,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   <span className="rounded-sm px-1.5 py-0.5 text-ink-dim ring-1 ring-inset ring-line">
                     {product.socket}
                     {product.chipset ? ` · ${product.chipset}` : ""}
+                  </span>
+                )}
+                {product.discontinued && (
+                  <span
+                    className="rounded-sm px-1.5 py-0.5 text-ink-faint ring-1 ring-inset ring-line"
+                    title="No longer sold by Canadian retailers; price history is kept for reference"
+                  >
+                    Discontinued
                   </span>
                 )}
                 {discount > 0 && (
