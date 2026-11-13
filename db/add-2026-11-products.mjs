@@ -17,7 +17,7 @@ const pool = new Pool({
 });
 
 const cpu = (id, name, model, msrp, release_date, socket, s) => ({
-  id, name, category: 'cpu', socket, msrp, release_date, image: '/cpu-placeholder.svg',
+  id, name, category: 'cpu', socket, msrp, release_date, image: `/products/${id}.jpg`,
   match: { require: ['RYZEN', model], forbid: [] },
   specs: {
     Cores: s[0], Threads: s[1], 'Base Clock': s[2], 'Boost Clock': s[3], TDP: s[4],
@@ -63,7 +63,7 @@ const CPUS = [
 const GPUS = [
   {
     id: 'rx-9070-gre', name: 'AMD Radeon RX 9070 GRE', category: 'gpu', socket: null, msrp: 1049, release_date: null,
-    image: '/gpu-placeholder.svg', match: { require: ['RX', '9070', 'GRE'], forbid: [] },
+    image: '/products/rx-9070-gre.jpg', match: { require: ['RX', '9070', 'GRE'], forbid: [] },
     specs: { 'Compute Units': '48', 'Stream Processors': '3072', VRAM: '12GB GDDR6', 'Boost Clock': '2.79 GHz', 'Memory Bus': '192-bit', TDP: '220W', Architecture: 'RDNA 4' },
   },
 ];
@@ -86,7 +86,7 @@ const board = (id, name, chipset, formFactor, wifi, msrp, require, forbid = []) 
   const { socket, ...features } = CHIPSET[chipset];
   return {
     id, name, category: 'motherboard', socket, chipset, msrp, release_date: null,
-    image: '/board-placeholder.svg', match: { require, forbid },
+    image: `/products/${id}.jpg`, match: { require, forbid },
     specs: { Socket: socket, Chipset: chipset, 'Form Factor': formFactor, 'Wi-Fi': wifi, ...features },
   };
 };
@@ -158,7 +158,7 @@ try {
       `INSERT INTO products (id, name, category, image, specs, msrp, release_date, socket, chipset, match_tokens)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        ON CONFLICT (id) DO UPDATE SET
-         name = EXCLUDED.name, specs = EXCLUDED.specs, msrp = EXCLUDED.msrp,
+         name = EXCLUDED.name, image = EXCLUDED.image, specs = EXCLUDED.specs, msrp = EXCLUDED.msrp,
          socket = EXCLUDED.socket, chipset = EXCLUDED.chipset, match_tokens = EXCLUDED.match_tokens
        RETURNING (xmax = 0) AS inserted`,
       [p.id, p.name, p.category, p.image, JSON.stringify(p.specs), p.msrp, p.release_date,
